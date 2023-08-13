@@ -15,6 +15,7 @@ module.exports = {
     wx: true,
     WechatMiniprogram: true,
     getCurrentPages: true,
+    UniApp: true,
     UniHelper: true,
   },
   parserOptions: {
