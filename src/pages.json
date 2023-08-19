@@ -4,7 +4,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "首页"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -18,12 +18,6 @@
       "style": {
         "navigationBarTitleText": "购物车"
       }
-    },
-    {
-      "path": "pages/category/category",
-      "style": {
-        "navigationBarTitleText": "分类"
-      }
     }
   ],
   "globalStyle": {
@@ -34,8 +28,8 @@
   },
   // 设置 TabBar
   "tabBar": {
-    "color": "#333",
-    "selectedColor": "#27ba9b",
+    "color": "#666666",
+    "selectedColor": "#FF5E00",
     "backgroundColor": "#fff",
     "borderStyle": "white",
     "list": [
@@ -44,12 +38,6 @@
         "pagePath": "pages/index/index",
         "iconPath": "static/tabs/home_default.png",
         "selectedIconPath": "static/tabs/home_selected.png"
-      },
-      {
-        "text": "分类",
-        "pagePath": "pages/category/category",
-        "iconPath": "static/tabs/category_default.png",
-        "selectedIconPath": "static/tabs/category_selected.png"
       },
       {
         "text": "购物车",
@@ -65,8 +53,8 @@
       }
     ]
   },
-   // 组件自动导入
-   "easycom": {
+  // 组件自动导入
+  "easycom": {
     "autoscan": true,
     "custom": {
       // uni-ui 规则如下配置
