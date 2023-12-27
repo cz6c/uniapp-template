@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import type { InputNumberBoxEvent } from '@/components/vk-data-input-number-box/vk-data-input-number-box'
 import {
   deleteMemberCartAPI,
   getMemberCartAPI,
   putMemberCartBySkuIdAPI,
   putMemberCartSelectedAPI,
-} from '@/api/cart'
+} from '@/services/cart'
 import { useMemberStore } from '@/stores'
 import type { CartItem } from '@/types/cart'
 import { onShow } from '@dcloudio/uni-app'
@@ -56,7 +57,7 @@ const onDeleteCart = (skuId: string) => {
 }
 
 // 修改商品数量
-const onChangeCount = (ev: any) => {
+const onChangeCount = (ev: InputNumberBoxEvent) => {
   putMemberCartBySkuIdAPI(ev.index, { count: ev.value })
 }
 
@@ -152,7 +153,7 @@ const gotoPayment = () => {
               </navigator>
               <!-- 商品数量 -->
               <view class="count">
-                <uni-number-box
+                <vk-data-input-number-box
                   v-model="item.count"
                   :min="1"
                   :max="item.stock"

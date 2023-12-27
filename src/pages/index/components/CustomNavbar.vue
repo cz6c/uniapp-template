@@ -1,90 +1,71 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
-const value = ref('')
 </script>
 
 <template>
-  <view class="navbar" :style="{ paddingTop: safeAreaInsets!.top + 8 + 'px' }">
+  <view class="navbar" :style="{ paddingTop: safeAreaInsets!.top + 10 + 'px' }">
     <!-- logo文字 -->
     <view class="logo">
-      <image
-        class="logo-image"
-        src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg"
-      ></image>
-      <text class="logo-text">小张翼德的店铺</text>
+      <image class="logo-image" src="@/static/images/logo.png"></image>
+      <text class="logo-text">新鲜 · 亲民 · 快捷</text>
     </view>
     <!-- 搜索条 -->
     <view class="search">
-      <uni-easyinput
-        class="input-search"
-        v-model="value"
-        prefixIcon="search"
-        :inputBorder="false"
-        confirm-type="search"
-        placeholder="好安森糖尿病治疗仪"
-      ></uni-easyinput>
-      <text class="text-search">搜索</text>
+      <text class="icon-search">搜索商品</text>
+      <text class="icon-scan"></text>
     </view>
-    <image class="info-image" src="@/static/images/navigator_info.png"></image>
   </view>
 </template>
 
 <style lang="scss">
 /* 自定义导航条 */
 .navbar {
-  background: no-repeat center;
   background-image: url(@/static/images/navigator_bg.png);
-  background-size: 100% 100%;
+  background-size: cover;
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-top: 20px;
   .logo {
     display: flex;
     align-items: center;
-    height: 56rpx;
-    padding-left: 24rpx;
+    height: 64rpx;
+    padding-left: 30rpx;
     .logo-image {
-      width: 56rpx;
-      height: 56rpx;
-      border-radius: 50%;
+      width: 166rpx;
+      height: 39rpx;
     }
     .logo-text {
-      width: 224rpx;
-      font-size: 32rpx;
-      font-weight: 500;
-      color: #333333;
-      padding-left: 16rpx;
+      flex: 1;
+      line-height: 28rpx;
+      color: #fff;
+      margin: 2rpx 0 0 20rpx;
+      padding-left: 20rpx;
+      border-left: 1rpx solid #fff;
+      font-size: 26rpx;
     }
   }
   .search {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 10rpx 0 24rpx;
-    margin: 44rpx 24rpx 0;
-    height: 60rpx;
-    color: #999999;
+    padding: 0 10rpx 0 26rpx;
+    height: 64rpx;
+    margin: 16rpx 20rpx;
+    color: #fff;
     font-size: 28rpx;
-    background: rgba(0, 0, 0, 0.03);
-    border-radius: 200rpx;
-    .text-search {
-      width: 108rpx;
-      height: 52rpx;
-      background: linear-gradient(90deg, #ff9f1a 0%, #ff5e00 100%);
-      border-radius: 200rpx;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    border-radius: 32rpx;
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+  .icon-search {
+    &::before {
+      margin-right: 10rpx;
     }
   }
-  .info-image {
-    height: 40rpx;
-    width: auto;
-    margin: 24rpx 48rpx;
+  .icon-scan {
+    font-size: 30rpx;
+    padding: 15rpx;
   }
 }
 </style>

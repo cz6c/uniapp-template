@@ -14,5 +14,9 @@
       "@uni-helper/uni-ui-types"
     ]
   },
+  "vueCompilerOptions": {
+    // 原配置 `experimentalRuntimeMode` 现调整为 `nativeTags`
+    "nativeTags": ["block", "component", "template", "slot"]
+  },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

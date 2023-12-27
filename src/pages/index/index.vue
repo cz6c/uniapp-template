@@ -1,111 +1,114 @@
 <script setup lang="ts">
+import { getHomeBannerAPI, getHomeHotAPI } from '@/services/home'
+import type { BannerItem, HotItem } from '@/types/home'
+import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
-import CustomNavbar from './components/CustomNavbar.vue'
+import CategoryPanel from './components/CategoryPanel.vue'
+import HotPanel from './components/HotPanel.vue'
+import RecommendPanel from './components/RecommendPanel.vue'
+import PageSkeleton from './components/PageSkeleton.vue'
+
+// 获取猜你喜欢组件实例
+const refRecommendPanel = ref()
+
+// 获取轮播图数据
+const bannerList = ref<BannerItem[]>([])
+const getHomeBannerData = async () => {
+  const res = await getHomeBannerAPI()
+  bannerList.value = res.result
+}
+
+// 获取热门推荐数据
+const hotList = ref<HotItem[]>([])
+const getHomeHotData = async () => {
+  const res = await getHomeHotAPI()
+  hotList.value = res.result
+}
+
+// 滚动触底事件
+const onScrolltolower = () => {
+  refRecommendPanel.value?.getMore()
+}
+
+// 是否加载中标记
+const isLoading = ref(false)
+
+// 页面加载
+onLoad(async () => {
+  isLoading.value = true
+  await Promise.all([getHomeBannerData(), getHomeHotData()])
+  isLoading.value = false
+})
 
 // 当前下拉刷新状态
 const isTriggered = ref(false)
 // 自定义下拉刷新被触发
 const onRefresherrefresh = async () => {
+  // 开始动画
   isTriggered.value = true
-  setTimeout(() => {
-    isTriggered.value = false
-  }, 2000)
+  // 加载数据
+  // await getHomeBannerData()
+  // await getHomeHotData()
+  // 重置猜你喜欢组件数据
+  refRecommendPanel.value?.resetData()
+  await Promise.all([getHomeBannerData(), getHomeHotData(), refRecommendPanel.value?.getMore()])
+  // 关闭动画
+  isTriggered.value = false
 }
-// 滚动触底事件
-const onScrolltolower = () => {}
 </script>
 
 <template>
-  <view class="index">
-    <!-- 自定义导航栏 -->
-    <CustomNavbar />
+  <view class="viewport">
     <!-- 滚动容器 -->
     <scroll-view
       enable-back-to-top
       refresher-enabled
-      @scrolltolower="onScrolltolower"
       @refresherrefresh="onRefresherrefresh"
       :refresher-triggered="isTriggered"
-      refresher-background="#f6f8f9"
+      @scrolltolower="onScrolltolower"
       class="scroll-view"
       scroll-y
     >
-      <view class="brand-list">
-        <view class="brand" v-for="(item, i) in 12" :key="i">
-          <view class="logo-info">
-            <image
-              class="logo"
-              src="https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg"
-            ></image>
-            <view class="info">
-              <view class="logo-text">SKII</view>
-              <view class="des">全部88个商品</view>
-            </view>
-          </view>
-          <image class="next" src="@/static/images/next.png"></image>
+      <PageSkeleton v-if="isLoading" />
+      <template v-else>
+        <!-- 自定义轮播图 -->
+        <XtxSwiper :list="bannerList" />
+        <!-- 分类面板 -->
+        <view class="wrap">
+          <CategoryPanel />
         </view>
-      </view>
+        <!-- 主要作品 -->
+        <view class="wrap">
+          <HotPanel :list="hotList" />
+        </view>
+        <!-- 文创好物 -->
+        <view class="wrap">
+          <RecommendPanel ref="refRecommendPanel" />
+        </view>
+      </template>
     </scroll-view>
   </view>
 </template>
 
 <style lang="scss">
 page {
-  background-color: #f6f8f9;
+  background-color: #f7f7f7;
   height: 100%;
   overflow: hidden;
 }
-.index {
+
+.viewport {
   height: 100%;
   display: flex;
   flex-direction: column;
-  .scroll-view {
-    flex: 1;
-    overflow: hidden;
-  }
-  .brand-list {
+}
+
+.scroll-view {
+  flex: 1;
+  overflow: hidden;
+  .wrap {
     padding: 0 24rpx;
-    padding-top: 24rpx;
-    .brand {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      padding: 24rpx;
-      width: 702rpx;
-      height: 300rpx;
-      background: #000000;
-      margin-bottom: 24rpx;
-      border-radius: 20rpx;
-      .logo-info {
-        display: flex;
-        align-items: center;
-        .logo {
-          width: 100rpx;
-          height: 100rpx;
-          box-shadow: 0rpx 2rpx 8rpx 0rpx rgba(0, 0, 0, 0.2);
-          border-radius: 16rpx;
-        }
-        .info {
-          margin-left: 16rpx;
-          font-size: 44rpx;
-          font-weight: 500;
-          color: #ffffff;
-          line-height: 56rpx;
-          .des {
-            margin-top: 4rpx;
-            height: 36rpx;
-            font-size: 28rpx;
-            font-weight: 400;
-            color: #ffffff;
-            line-height: 36rpx;
-          }
-        }
-      }
-      .next {
-        width: 60rpx;
-        height: 60rpx;
-      }
-    }
+    margin-top: 24rpx;
   }
 }
 </style>
