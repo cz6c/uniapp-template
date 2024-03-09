@@ -1,25 +1,19 @@
-/** 通用的用户信息 */
-type BaseProfile = {
-  /** 用户ID */
-  id: number
-  /** 头像  */
-  avatar: string
-  /** 账户名  */
-  account: string
-  /** 昵称 */
-  nickname?: string
-}
-
 /** 小程序登录 登录用户信息 */
-export type LoginResult = BaseProfile & {
-  /** 手机号 */
-  mobile: string
+export type LoginResult = {
   /** 登录凭证 */
   token: string
 }
 
 /** 个人信息 用户详情信息 */
-export type ProfileDetail = BaseProfile & {
+export type ProfileDetail = {
+  /** 用户ID */
+  id: number
+  /** 头像  */
+  avatar: string
+  /** 账户名  */
+  username: string
+  /** 昵称 */
+  nickname?: string
   /** 性别 */
   gender?: Gender
   /** 生日 */

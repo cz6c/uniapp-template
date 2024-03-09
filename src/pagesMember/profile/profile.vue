@@ -12,11 +12,11 @@ const { safeAreaInsets } = uni.getSystemInfoSync()
 // 获取个人信息，修改个人信息需提供初始值
 const profile = ref({} as ProfileDetail)
 const getMemberProfileData = async () => {
-  const res = await getMemberProfileAPI()
-  profile.value = res.result
+  const { data } = await getMemberProfileAPI()
+  profile.value = data
   // 同步 Store 的头像和昵称，用于我的页面展示
-  memberStore.profile!.avatar = res.result.avatar
-  memberStore.profile!.nickname = res.result.nickname
+  memberStore.profile!.avatar = data.avatar
+  memberStore.profile!.nickname = data.nickname
 }
 
 onLoad(() => {
@@ -111,7 +111,7 @@ const onSubmit = async () => {
     countyCode: fullLocationCode[2],
   })
   // 更新Store昵称
-  memberStore.profile!.nickname = res.result.nickname
+  // memberStore.profile!.nickname = res.result.nickname
   uni.showToast({ icon: 'success', title: '保存成功' })
   setTimeout(() => {
     uni.navigateBack()
@@ -139,7 +139,7 @@ const onSubmit = async () => {
       <view class="form-content">
         <view class="form-item">
           <text class="label">账号</text>
-          <text class="account placeholder">{{ profile?.account }}</text>
+          <text class="account placeholder">{{ profile?.username }}</text>
         </view>
         <view class="form-item">
           <text class="label">昵称</text>

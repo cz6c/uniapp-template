@@ -12,7 +12,7 @@
 
 import { useMemberStore } from '@/stores'
 
-const baseURL = 'https://pcapi-xiaotuxian-front-devtest.itheima.net'
+const baseURL = 'http://192.168.1.106:3000'
 
 // 添加拦截器
 const httpInterceptor = {
@@ -31,9 +31,9 @@ const httpInterceptor = {
     }
     // 4. 添加 token 请求头标识
     const memberStore = useMemberStore()
-    const token = memberStore.profile?.token
+    const token = memberStore.token
     if (token) {
-      options.header.Authorization = token
+      options.header.Authorization = `bearer ${token}`
     }
   },
 }
@@ -56,7 +56,7 @@ uni.addInterceptor('uploadFile', httpInterceptor)
 type Data<T> = {
   code: string
   msg: string
-  result: T
+  data: T
 }
 // 2.2 添加类型，支持泛型
 export const http = <T>(options: UniApp.RequestOptions) => {
@@ -73,7 +73,7 @@ export const http = <T>(options: UniApp.RequestOptions) => {
         } else if (res.statusCode === 401) {
           // 401错误  -> 清理用户信息，跳转到登录页
           const memberStore = useMemberStore()
-          memberStore.clearProfile()
+          memberStore.weblogout()
           uni.navigateTo({ url: '/pages/login/login' })
           reject(res)
         } else {

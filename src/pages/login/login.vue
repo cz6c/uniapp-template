@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { postLoginAPI, postLoginWxMinAPI, postLoginWxMinSimpleAPI } from '@/services/login'
+import { postLoginAPI, postLoginWxMinAPI } from '@/services/login'
 import { useMemberStore } from '@/stores'
 import type { LoginResult } from '@/types/member'
 import { onLoad } from '@dcloudio/uni-app'
@@ -16,21 +16,29 @@ onLoad(async () => {
 // 获取用户手机号码
 const onGetphonenumber: UniHelper.ButtonOnGetphonenumber = async (ev) => {
   const { encryptedData, iv } = ev.detail
-  const res = await postLoginWxMinAPI({ code, encryptedData, iv })
-  loginSuccess(res.result)
+  const { data } = await postLoginWxMinAPI({ code, encryptedData, iv })
+  loginSuccess(data)
 }
 // #endif
 
-// 模拟手机号码快捷登录（开发练习）
-const onGetphonenumberSimple = async () => {
-  const res = await postLoginWxMinSimpleAPI('13123456789')
-  loginSuccess(res.result)
-}
+// #ifdef H5
+// 传统表单登录，测试账号：member 密码：123456，测试账号仅开发学习使用。
+const form = ref({
+  username: 'member',
+  password: '123456',
+})
 
-const loginSuccess = (profile: LoginResult) => {
-  // 保存会员信息
+// 表单提交
+const onSubmit = async () => {
+  const { data } = await postLoginAPI(form.value)
+  loginSuccess(data)
+}
+// #endif
+
+const loginSuccess = async (data: LoginResult) => {
   const memberStore = useMemberStore()
-  memberStore.setProfile(profile)
+  memberStore.setToken(data.token)
+  await memberStore.getMemberProfileData()
   // 成功提示
   uni.showToast({ icon: 'success', title: '登录成功' })
   setTimeout(() => {
@@ -39,20 +47,6 @@ const loginSuccess = (profile: LoginResult) => {
     uni.navigateBack()
   }, 500)
 }
-
-// #ifdef H5
-// 传统表单登录，测试账号：13123456789 密码：123456，测试账号仅开发学习使用。
-const form = ref({
-  account: '13123456789',
-  password: '',
-})
-
-// 表单提交
-const onSubmit = async () => {
-  const res = await postLoginAPI(form.value)
-  loginSuccess(res.result)
-}
-// #endif
 </script>
 
 <template>
@@ -65,7 +59,12 @@ const onSubmit = async () => {
     <view class="login">
       <!-- 网页端表单登录 -->
       <!-- #ifdef H5 -->
-      <input v-model="form.account" class="input" type="text" placeholder="请输入用户名/手机号码" />
+      <input
+        v-model="form.username"
+        class="input"
+        type="text"
+        placeholder="请输入用户名/手机号码"
+      />
       <input v-model="form.password" class="input" type="text" password placeholder="请输入密码" />
       <button @tap="onSubmit" class="button phone">登录</button>
       <!-- #endif -->
@@ -80,12 +79,6 @@ const onSubmit = async () => {
       <view class="extra">
         <view class="caption">
           <text>其他登录方式</text>
-        </view>
-        <view class="options">
-          <!-- 通用模拟登录 -->
-          <button @tap="onGetphonenumberSimple">
-            <text class="icon icon-phone">模拟快捷登录</text>
-          </button>
         </view>
       </view>
       <view class="tips">登录/注册即视为你同意《服务条款》和《小兔鲜儿隐私协议》</view>

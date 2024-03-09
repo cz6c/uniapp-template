@@ -1,29 +1,39 @@
-import type { LoginResult } from '@/types/member'
+import type { ProfileDetail } from '@/types/member'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getMemberProfileAPI } from '@/services/profile'
 
 // 定义 Store
 export const useMemberStore = defineStore(
   'member',
   () => {
     // 会员信息
-    const profile = ref<LoginResult>()
+    const profile = ref<ProfileDetail>()
+    // token
+    const token = ref('')
 
-    // 保存会员信息，登录时使用
-    const setProfile = (val: LoginResult) => {
-      profile.value = val
+    const setToken = (val: string) => {
+      token.value = val
+    }
+
+    // 获取会员信息
+    const getMemberProfileData = async () => {
+      const { data } = await getMemberProfileAPI()
+      profile.value = data
     }
 
     // 清理会员信息，退出时使用
-    const clearProfile = () => {
+    const weblogout = () => {
       profile.value = undefined
     }
 
     // 记得 return
     return {
       profile,
-      setProfile,
-      clearProfile,
+      token,
+      setToken,
+      getMemberProfileData,
+      weblogout,
     }
   },
   {

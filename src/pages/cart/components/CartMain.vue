@@ -122,11 +122,6 @@ const gotoPayment = () => {
     <template v-if="memberStore.profile">
       <!-- 购物车列表 -->
       <view class="cart-list" v-if="showCartList">
-        <!-- 优惠提示 -->
-        <view class="tips">
-          <text class="label">满减</text>
-          <text class="desc">满1件, 即可享受9折优惠</text>
-        </view>
         <!-- 滑动操作分区 -->
         <uni-swipe-action>
           <!-- 滑动操作项 -->
