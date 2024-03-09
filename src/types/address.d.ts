@@ -3,7 +3,7 @@ export type AddressParams = {
   /** 收货人姓名 */
   receiver: string
   /** 联系方式 */
-  contact: string
+  receiverMobile: string
   /** 省份编码 */
   provinceCode: string
   /** 城市编码 */

@@ -17,20 +17,25 @@ export type ProfileDetail = {
   /** 性别 */
   gender?: Gender
   /** 生日 */
-  birthday?: string
+  birthday?: Data
   /** 省市区 */
   fullLocation?: string
   /** 职业 */
   profession?: string
 }
-/** 性别 */
-export type Gender = '女' | '男'
+
+/** 性别枚举 */
+export enum Gender {
+  男 = 1,
+  女 = 2,
+}
 
 /** 个人信息 修改请求体参数 */
 export type ProfileParams = Pick<
   ProfileDetail,
   'nickname' | 'gender' | 'birthday' | 'profession'
 > & {
+  avatar?: string
   /** 省份编码 */
   provinceCode?: string
   /** 城市编码 */

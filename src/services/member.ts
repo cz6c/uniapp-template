@@ -15,10 +15,10 @@ export const getMemberProfileAPI = () => {
  * 修改个人信息
  * @param data 请求体参数
  */
-export const putMemberProfileAPI = (data: ProfileParams) => {
+export const updateMemberProfileAPI = (data: ProfileParams) => {
   return http<ProfileDetail>({
     method: 'POST',
-    url: '/app/member/updete',
+    url: '/app/member/update',
     data,
   })
 }

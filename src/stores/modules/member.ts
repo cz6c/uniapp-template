@@ -1,7 +1,8 @@
 import type { ProfileDetail } from '@/types/member'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getMemberProfileAPI } from '@/services/profile'
+import { getMemberProfileAPI } from '@/services/member'
+import dayjs from 'dayjs'
 
 // 定义 Store
 export const useMemberStore = defineStore(
@@ -19,7 +20,7 @@ export const useMemberStore = defineStore(
     // 获取会员信息
     const getMemberProfileData = async () => {
       const { data } = await getMemberProfileAPI()
-      profile.value = data
+      profile.value = { ...data, birthday: dayjs(data.birthday).format('YYYY-MM-DD') }
     }
 
     // 清理会员信息，退出时使用

@@ -1,29 +1,18 @@
 <script setup lang="ts">
-import { getMemberProfileAPI, putMemberProfileAPI } from '@/services/profile'
+import { updateMemberProfileAPI } from '@/services/member'
 import { useMemberStore } from '@/stores'
 import type { Gender, ProfileDetail } from '@/types/member'
 import { formatDate } from '@/utils'
-import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
 
-// 获取个人信息，修改个人信息需提供初始值
-const profile = ref({} as ProfileDetail)
-const getMemberProfileData = async () => {
-  const { data } = await getMemberProfileAPI()
-  profile.value = data
-  // 同步 Store 的头像和昵称，用于我的页面展示
-  memberStore.profile!.avatar = data.avatar
-  memberStore.profile!.nickname = data.nickname
-}
-
-onLoad(() => {
-  getMemberProfileData()
-})
-
 const memberStore = useMemberStore()
+
+// 获取个人信息，修改个人信息需提供初始值
+const profile = ref(memberStore.profile as ProfileDetail)
+
 // 修改头像
 const onAvatarChange = () => {
   // 调用拍照/选择图片
@@ -62,18 +51,22 @@ const onAvatarChange = () => {
 const uploadFile = (file: string) => {
   // 文件上传
   uni.uploadFile({
-    url: '/member/profile/avatar',
+    url: '/api/files/upload',
     name: 'file',
     filePath: file,
-    success: (res) => {
-      if (res.statusCode === 200) {
-        const avatar = JSON.parse(res.data).result.avatar
+    success: async (res) => {
+      try {
+        const data = JSON.parse(res.data)
+        const avatar = data.url
+        await updateMemberProfileAPI({
+          avatar,
+        })
         // 个人信息页数据更新
         profile.value!.avatar = avatar
         // Store头像更新
         memberStore.profile!.avatar = avatar
         uni.showToast({ icon: 'success', title: '更新成功' })
-      } else {
+      } catch (error) {
         uni.showToast({ icon: 'error', title: '出现错误' })
       }
     },
@@ -82,7 +75,8 @@ const uploadFile = (file: string) => {
 
 // 修改性别
 const onGenderChange: UniHelper.RadioGroupOnChange = (ev) => {
-  profile.value.gender = ev.detail.value as Gender
+  console.log(ev.detail.value)
+  profile.value.gender = ev.detail.value === '男' ? 1 : 2
 }
 
 // 修改生日
@@ -102,7 +96,7 @@ const onFullLocationChange: UniHelper.RegionPickerOnChange = (ev) => {
 // 点击保存提交表单
 const onSubmit = async () => {
   const { nickname, gender, birthday } = profile.value
-  const res = await putMemberProfileAPI({
+  await updateMemberProfileAPI({
     nickname,
     gender,
     birthday,
@@ -110,8 +104,7 @@ const onSubmit = async () => {
     cityCode: fullLocationCode[1],
     countyCode: fullLocationCode[2],
   })
-  // 更新Store昵称
-  // memberStore.profile!.nickname = res.result.nickname
+  await memberStore.getMemberProfileData()
   uni.showToast({ icon: 'success', title: '保存成功' })
   setTimeout(() => {
     uni.navigateBack()
@@ -149,11 +142,11 @@ const onSubmit = async () => {
           <text class="label">性别</text>
           <radio-group @change="onGenderChange">
             <label class="radio">
-              <radio value="男" color="#27ba9b" :checked="profile?.gender === '男'" />
+              <radio value="男" color="#27ba9b" :checked="profile?.gender === 1" />
               男
             </label>
             <label class="radio">
-              <radio value="女" color="#27ba9b" :checked="profile?.gender === '女'" />
+              <radio value="女" color="#27ba9b" :checked="profile?.gender === 2" />
               女
             </label>
           </radio-group>
@@ -328,3 +321,4 @@ page {
   }
 }
 </style>
+@/services/member

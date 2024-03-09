@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import {
   getMemberAddressByIdAPI,
-  postMemberAddressAPI,
-  putMemberAddressByIdAPI,
+  addMemberAddressAPI,
+  updateMemberAddressByIdAPI,
+  getAreaTreesAPI,
 } from '@/services/address'
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
@@ -10,11 +11,11 @@ import { ref } from 'vue'
 // 表单数据
 const form = ref({
   receiver: '', // 收货人
-  contact: '', // 联系方式
+  receiverMobile: '', // 联系方式
   fullLocation: '', // 省市区(前端展示)
-  provinceCode: '', // 省份编码(后端参数)
-  cityCode: '', // 城市编码(后端参数)
-  countyCode: '', // 区/县编码(后端参数)
+  provinceCode: '11', // 省份编码(后端参数)
+  cityCode: '1101', // 城市编码(后端参数)
+  countyCode: '110101', // 区/县编码(后端参数)
   address: '', // 详细地址
   isDefault: 0, // 默认地址，1为是，0为否
 })
@@ -28,9 +29,9 @@ const query = defineProps<{
 const getMemberAddressByIdData = async () => {
   if (query.id) {
     // 发送请求
-    const res = await getMemberAddressByIdAPI(query.id)
+    const { data } = await getMemberAddressByIdAPI(query.id)
     // 把数据合并到表单中
-    Object.assign(form.value, res.result)
+    Object.assign(form.value, data)
   }
 }
 
@@ -42,16 +43,6 @@ onLoad(() => {
 // 动态设置标题
 uni.setNavigationBarTitle({ title: query.id ? '修改地址' : '新建地址' })
 
-// 收集所在地区
-const onRegionChange: UniHelper.RegionPickerOnChange = (ev) => {
-  // 省市区(前端展示)
-  form.value.fullLocation = ev.detail.value.join(' ')
-  // 省市区(后端参数)
-  const [provinceCode, cityCode, countyCode] = ev.detail.code!
-  // form.value.provinceCode = provinceCode
-  Object.assign(form.value, { provinceCode, cityCode, countyCode })
-}
-
 // 收集是否默认收货地址
 const onSwitchChange: UniHelper.SwitchOnChange = (ev) => {
   form.value.isDefault = ev.detail.value ? 1 : 0
@@ -62,7 +53,7 @@ const rules: UniHelper.UniFormsRules = {
   receiver: {
     rules: [{ required: true, errorMessage: '请输入收货人姓名' }],
   },
-  contact: {
+  receiverMobile: {
     rules: [
       { required: true, errorMessage: '请输入联系方式' },
       { pattern: /^1[3-9]\d{9}$/, errorMessage: '手机号格式不正确' },
@@ -87,10 +78,10 @@ const onSubmit = async () => {
     // 校验通过后再发送请求
     if (query.id) {
       // 修改地址请求
-      await putMemberAddressByIdAPI(query.id, form.value)
+      await updateMemberAddressByIdAPI({ ...form.value, id: query.id })
     } else {
       // 新建地址请求
-      await postMemberAddressAPI(form.value)
+      await addMemberAddressAPI(form.value)
     }
     // 成功提示
     uni.showToast({ icon: 'success', title: query.id ? '修改成功' : '添加成功' })
@@ -114,6 +105,24 @@ const onCityChange: UniHelper.UniDataPickerOnChange = (ev) => {
     countyCode: county.value,
   })
 }
+// 获取地区数据
+const areaTreesData = ref()
+const getAreaTreesData = async () => {
+  const { data } = await getAreaTreesAPI()
+  areaTreesData.value = data
+}
+// #endif
+
+// #ifdef MP-WEIXIN
+// 收集所在地区
+const onRegionChange: UniHelper.RegionPickerOnChange = (ev) => {
+  // 省市区(前端展示)
+  form.value.fullLocation = ev.detail.value.join(' ')
+  // 省市区(后端参数)
+  const [provinceCode, cityCode, countyCode] = ev.detail.code!
+  // form.value.provinceCode = provinceCode
+  Object.assign(form.value, { provinceCode, cityCode, countyCode })
+}
 // #endif
 </script>
 
@@ -125,13 +134,13 @@ const onCityChange: UniHelper.UniDataPickerOnChange = (ev) => {
         <text class="label">收货人</text>
         <input class="input" placeholder="请填写收货人姓名" v-model="form.receiver" />
       </uni-forms-item>
-      <uni-forms-item name="contact" class="form-item">
+      <uni-forms-item name="receiverMobile" class="form-item">
         <text class="label">手机号码</text>
         <input
           class="input"
           placeholder="请填写收货人手机号码"
           :maxlength="11"
-          v-model="form.contact"
+          v-model="form.receiverMobile"
         />
       </uni-forms-item>
       <uni-forms-item name="countyCode" class="form-item">
@@ -152,15 +161,15 @@ const onCityChange: UniHelper.UniDataPickerOnChange = (ev) => {
         <uni-data-picker
           placeholder="请选择地址"
           popup-title="请选择城市"
-          collection="opendb-city-china"
-          field="code as value, name as text"
-          orderby="value asc"
-          :step-searh="true"
-          self-field="code"
-          parent-field="parent_code"
+          :localdata="areaTreesData"
           @change="onCityChange"
-          :clear-icon="false"
+          @popupopened="getAreaTreesData"
           v-model="form.countyCode"
+          :map="{
+            text: 'name',
+            value: 'code',
+          }"
+          :clear-icon="false"
         />
         <!-- #endif -->
       </uni-forms-item>
