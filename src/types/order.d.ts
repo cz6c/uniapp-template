@@ -1,4 +1,3 @@
-import type { OrderState } from '@/services/constants'
 import type { AddressItem } from './address'
 import type { PageParams } from '@/types/global'
 
@@ -142,21 +141,12 @@ export type LogisticItem = {
 }
 
 /** 订单列表参数 */
-export type OrderListParams = PageParams & { orderState: number }
+export interface OrderListParams extends PageParams {
+  orderState?: number
+}
 
 /** 订单列表 */
-export type OrderListResult = {
-  /** 总记录数 */
-  counts: number
-  /** 数据集合    [ 订单信息 ] */
-  items: OrderItem[]
-  /** 当前页码 */
-  page: number
-  /** 总页数 */
-  pages: number
-  /** 页尺寸 */
-  pageSize: number
-}
+export type OrderListResult = PageResult<OrderItem>
 
 /** 订单列表项 */
 export type OrderItem = OrderResult & {

@@ -3,8 +3,8 @@ import type { InputNumberBoxEvent } from '@/components/vk-data-input-number-box/
 import {
   deleteMemberCartAPI,
   getMemberCartAPI,
-  putMemberCartBySkuIdAPI,
-  putMemberCartSelectedAPI,
+  postMemberCartBySkuIdAPI,
+  postMemberCartSelectedAPI,
 } from '@/services/cart'
 import { useMemberStore } from '@/stores'
 import type { CartItem } from '@/types/cart'
@@ -27,9 +27,11 @@ const cartList = ref<CartItem[]>([])
 // 优化购物车空列表状态，默认展示列表
 const showCartList = ref(true)
 const getMemberCartData = async () => {
-  const res = await getMemberCartAPI()
-  cartList.value = res.result
-  showCartList.value = res.result.length > 0
+  const {
+    data: { list },
+  } = await getMemberCartAPI()
+  cartList.value = list
+  showCartList.value = list.length > 0
 }
 
 // 初始化调用: 页面显示触发
@@ -58,7 +60,7 @@ const onDeleteCart = (skuId: string) => {
 
 // 修改商品数量
 const onChangeCount = (ev: InputNumberBoxEvent) => {
-  putMemberCartBySkuIdAPI(ev.index, { count: ev.value })
+  postMemberCartBySkuIdAPI({ id: ev.index, count: ev.value })
 }
 
 // 修改选中状态-单品修改
@@ -66,7 +68,7 @@ const onChangeSelected = (item: CartItem) => {
   // 前端数据更新-是否选中取反
   item.selected = !item.selected
   // 后端数据更新
-  putMemberCartBySkuIdAPI(item.skuId, { selected: item.selected })
+  postMemberCartBySkuIdAPI({ id: item.skuId, selected: item.selected })
 }
 
 // 计算全选状态
@@ -83,7 +85,7 @@ const onChangeSelectedAll = () => {
     item.selected = _isSelectedAll
   })
   // 后端数据更新
-  putMemberCartSelectedAPI({ selected: _isSelectedAll })
+  postMemberCartSelectedAPI({ selected: _isSelectedAll })
 }
 
 // 计算选中单品列表

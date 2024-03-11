@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { OrderState, orderStateList } from '@/services/constants'
 import {
   deleteMemberOrderAPI,
   getMemberOrderByIdAPI,
   getMemberOrderCancelByIdAPI,
   getMemberOrderLogisticsByIdAPI,
-  getMemberOrderConsignmentByIdAPI,
-  putMemberOrderReceiptByIdAPI,
+  postMemberOrderReceiptByIdAPI,
 } from '@/services/order'
+import { getPayMockAPI, getPayWxPayMiniPayAPI } from '@/services/pay'
 import type { LogisticItem, OrderResult } from '@/types/order'
 import { onLoad, onReady } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import PageSkeleton from './components/PageSkeleton.vue'
-import { getPayMockAPI, getPayWxPayMiniPayAPI } from '@/services/pay'
+import { OrderState } from '@/services/constants'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
@@ -98,13 +97,9 @@ onReady(() => {
 // 获取订单详情
 const order = ref<OrderResult>()
 const getMemberOrderByIdData = async () => {
-  const res = await getMemberOrderByIdAPI(query.id)
-  order.value = res.result
-  if (
-    [OrderState.DaiShouHuo, OrderState.DaiPingJia, OrderState.YiWanCheng].includes(
-      order.value.orderState,
-    )
-  ) {
+  const { data } = await getMemberOrderByIdAPI(query.id)
+  order.value = data
+  if ([OrderState.待收货, OrderState.待评价, OrderState.已完成].includes(order.value.orderState)) {
     getMemberOrderLogisticsByIdData()
   }
 }
@@ -112,8 +107,10 @@ const getMemberOrderByIdData = async () => {
 // 获取物流信息
 const logisticList = ref<LogisticItem[]>([])
 const getMemberOrderLogisticsByIdData = async () => {
-  const res = await getMemberOrderLogisticsByIdAPI(query.id)
-  logisticList.value = res.result.list
+  const {
+    data: { list },
+  } = await getMemberOrderLogisticsByIdAPI(query.id)
+  logisticList.value = list
 }
 
 onLoad(() => {
@@ -123,7 +120,7 @@ onLoad(() => {
 // 倒计时结束事件
 const onTimeup = () => {
   // 修改订单状态为已取消
-  order.value!.orderState = OrderState.YiQuXiao
+  order.value!.orderState = OrderState.已取消
 }
 
 // 订单支付
@@ -134,8 +131,8 @@ const onOrderPay = async () => {
   } else {
     // #ifdef MP-WEIXIN
     // 正式环境微信支付
-    const res = await getPayWxPayMiniPayAPI({ orderId: query.id })
-    await wx.requestPayment(res.result)
+    const { data } = await getPayWxPayMiniPayAPI({ orderId: query.id })
+    await wx.requestPayment(data)
     // #endif
 
     // #ifdef H5 || APP-PLUS
@@ -147,17 +144,6 @@ const onOrderPay = async () => {
   uni.redirectTo({ url: `/pagesOrder/payment/payment?id=${query.id}` })
 }
 
-// 是否为开发环境
-const isDev = import.meta.env.DEV
-// 模拟发货
-const onOrderSend = async () => {
-  if (isDev) {
-    await getMemberOrderConsignmentByIdAPI(query.id)
-    uni.showToast({ icon: 'success', title: '模拟发货完成' })
-    // 主动更新订单状态
-    order.value!.orderState = OrderState.DaiShouHuo
-  }
-}
 // 确认收货
 const onOrderConfirm = () => {
   // 二次确认弹窗
@@ -166,9 +152,9 @@ const onOrderConfirm = () => {
     confirmColor: '#27BA9B',
     success: async (success) => {
       if (success.confirm) {
-        const res = await putMemberOrderReceiptByIdAPI(query.id)
+        const { data } = await postMemberOrderReceiptByIdAPI(query.id)
         // 更新订单状态
-        order.value = res.result
+        order.value = data
       }
     },
   })
@@ -191,9 +177,9 @@ const onOrderDelete = () => {
 // 取消订单
 const onOrderCancel = async () => {
   // 发送请求
-  const res = await getMemberOrderCancelByIdAPI(query.id, { cancelReason: reason.value })
+  const { data } = await getMemberOrderCancelByIdAPI({ id: query.id, cancelReason: reason.value })
   // 更新订单信息
-  order.value = res.result
+  order.value = data
   // 关闭弹窗
   popup.value?.close!()
   // 轻提示
@@ -220,7 +206,7 @@ const onOrderCancel = async () => {
       <!-- 订单状态 -->
       <view class="overview" :style="{ paddingTop: safeAreaInsets!.top + 20 + 'px' }">
         <!-- 待付款状态:展示倒计时 -->
-        <template v-if="order.orderState === OrderState.DaiFuKuan">
+        <template v-if="order.orderState === OrderState.待付款">
           <view class="status icon-clock">等待付款</view>
           <view class="tips">
             <text class="money">应付金额: ¥ {{ order.payMoney }}</text>
@@ -239,7 +225,7 @@ const onOrderCancel = async () => {
         <!-- 其他订单状态:展示再次购买按钮 -->
         <template v-else>
           <!-- 订单状态文字 -->
-          <view class="status"> {{ orderStateList[order.orderState].text }} </view>
+          <view class="status"> {{ OrderState[order.orderState] }} </view>
           <view class="button-group">
             <navigator
               class="button"
@@ -248,17 +234,9 @@ const onOrderCancel = async () => {
             >
               再次购买
             </navigator>
-            <!-- 待发货状态：模拟发货,开发期间使用,用于修改订单状态为已发货 -->
-            <view
-              v-if="isDev && order.orderState == OrderState.DaiFaHuo"
-              @tap="onOrderSend"
-              class="button"
-            >
-              模拟发货
-            </view>
             <!-- 待收货状态: 展示确认收货按钮 -->
             <view
-              v-if="order.orderState === OrderState.DaiShouHuo"
+              v-if="order.orderState === OrderState.待收货"
               @tap="onOrderConfirm"
               class="button"
             >
@@ -307,7 +285,7 @@ const onOrderCancel = async () => {
             </view>
           </navigator>
           <!-- 待评价状态:展示按钮 -->
-          <view class="action" v-if="order.orderState === OrderState.DaiPingJia">
+          <view class="action" v-if="order.orderState === OrderState.待评价">
             <view class="button primary">申请售后</view>
             <navigator url="" class="button"> 去评价 </navigator>
           </view>
@@ -344,7 +322,7 @@ const onOrderCancel = async () => {
       <view class="toolbar-height" :style="{ paddingBottom: safeAreaInsets?.bottom + 'px' }"></view>
       <view class="toolbar" :style="{ paddingBottom: safeAreaInsets?.bottom + 'px' }">
         <!-- 待付款状态:展示支付按钮 -->
-        <template v-if="order.orderState === OrderState.DaiFuKuan">
+        <template v-if="order.orderState === OrderState.待付款">
           <view class="button primary" @tap="onOrderPay"> 去支付 </view>
           <view class="button" @tap="popup?.open?.()"> 取消订单 </view>
         </template>
@@ -360,17 +338,17 @@ const onOrderCancel = async () => {
           <!-- 待收货状态: 展示确认收货 -->
           <view
             class="button primary"
-            v-if="order.orderState === OrderState.DaiShouHuo"
+            v-if="order.orderState === OrderState.待收货"
             @tap="onOrderConfirm"
           >
             确认收货
           </view>
           <!-- 待评价状态: 展示去评价 -->
-          <view class="button" v-if="order.orderState === OrderState.DaiPingJia"> 去评价 </view>
+          <view class="button" v-if="order.orderState === OrderState.待评价"> 去评价 </view>
           <!-- 待评价/已完成/已取消 状态: 展示删除订单 -->
           <view
             class="button delete"
-            v-if="order.orderState >= OrderState.DaiPingJia"
+            v-if="order.orderState >= OrderState.待评价"
             @tap="onOrderDelete"
           >
             删除订单

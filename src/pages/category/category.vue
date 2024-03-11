@@ -1,32 +1,23 @@
 <script setup lang="ts">
 import { getCategoryTopAPI } from '@/services/category'
-import { getHomeBannerAPI } from '@/services/home'
 import type { CategoryTopItem } from '@/types/category'
-import type { BannerItem } from '@/types/home'
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import PageSkeleton from './components/PageSkeleton.vue'
-
-// 获取轮播图数据
-const bannerList = ref<BannerItem[]>([])
-const getBannerData = async () => {
-  const res = await getHomeBannerAPI(2)
-  bannerList.value = res.result
-}
 
 // 获取分类列表数据
 const categoryList = ref<CategoryTopItem[]>([])
 const activeIndex = ref(0)
 const getCategoryTopData = async () => {
-  const res = await getCategoryTopAPI()
-  categoryList.value = res.result
+  const { data } = await getCategoryTopAPI()
+  categoryList.value = data
 }
 
 // 是否数据加载完毕
 const isFinish = ref(false)
 // 页面加载
 onLoad(async () => {
-  await Promise.all([getBannerData(), getCategoryTopData()])
+  await getCategoryTopData()
   isFinish.value = true
 })
 
@@ -62,8 +53,6 @@ const subCategoryList = computed(() => {
       </scroll-view>
       <!-- 右侧：二级分类 -->
       <scroll-view enable-back-to-top class="secondary" scroll-y>
-        <!-- 焦点图 -->
-        <XtxSwiper class="banner" :list="bannerList" />
         <!-- 内容区域 -->
         <view class="panel" v-for="item in subCategoryList" :key="item.id">
           <view class="title">

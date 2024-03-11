@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { getHomeBannerAPI, getHomeHotAPI } from '@/services/home'
-import type { BannerItem, HotItem } from '@/types/home'
+import { getHomeBannerAPI } from '@/services/home'
+import type { BannerItem } from '@/types/home'
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import CategoryPanel from './components/CategoryPanel.vue'
-import HotPanel from './components/HotPanel.vue'
 import RecommendPanel from './components/RecommendPanel.vue'
 import PageSkeleton from './components/PageSkeleton.vue'
 
@@ -14,15 +13,10 @@ const refRecommendPanel = ref()
 // 获取轮播图数据
 const bannerList = ref<BannerItem[]>([])
 const getHomeBannerData = async () => {
-  const res = await getHomeBannerAPI()
-  bannerList.value = res.result
-}
-
-// 获取热门推荐数据
-const hotList = ref<HotItem[]>([])
-const getHomeHotData = async () => {
-  const res = await getHomeHotAPI()
-  hotList.value = res.result
+  const {
+    data: { list },
+  } = await getHomeBannerAPI()
+  bannerList.value = list
 }
 
 // 滚动触底事件
@@ -36,7 +30,7 @@ const isLoading = ref(false)
 // 页面加载
 onLoad(async () => {
   isLoading.value = true
-  await Promise.all([getHomeBannerData(), getHomeHotData()])
+  await Promise.all([getHomeBannerData()])
   isLoading.value = false
 })
 
@@ -46,12 +40,10 @@ const isTriggered = ref(false)
 const onRefresherrefresh = async () => {
   // 开始动画
   isTriggered.value = true
-  // 加载数据
-  // await getHomeBannerData()
-  // await getHomeHotData()
   // 重置猜你喜欢组件数据
   refRecommendPanel.value?.resetData()
-  await Promise.all([getHomeBannerData(), getHomeHotData(), refRecommendPanel.value?.getMore()])
+  // 加载数据
+  await Promise.all([getHomeBannerData(), refRecommendPanel.value?.getMore()])
   // 关闭动画
   isTriggered.value = false
 }
@@ -76,10 +68,6 @@ const onRefresherrefresh = async () => {
         <!-- 分类面板 -->
         <view class="wrap">
           <CategoryPanel />
-        </view>
-        <!-- 主要作品 -->
-        <view class="wrap">
-          <HotPanel :list="hotList" />
         </view>
         <!-- 文创好物 -->
         <view class="wrap">

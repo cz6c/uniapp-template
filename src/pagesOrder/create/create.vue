@@ -40,18 +40,18 @@ const query = defineProps<{
 const orderPre = ref<OrderPreResult>()
 const getMemberOrderPreData = async () => {
   if (query.count && query.skuId) {
-    const res = await getMemberOrderPreNowAPI({
+    const { data } = await getMemberOrderPreNowAPI({
       count: query.count,
       skuId: query.skuId,
     })
-    orderPre.value = res.result
+    orderPre.value = data
   } else if (query.orderId) {
     // 再次购买
-    const res = await getMemberOrderRepurchaseByIdAPI(query.orderId)
-    orderPre.value = res.result
+    const { data } = await getMemberOrderRepurchaseByIdAPI(query.orderId)
+    orderPre.value = data
   } else {
-    const res = await getMemberOrderPreAPI()
-    orderPre.value = res.result
+    const { data } = await getMemberOrderPreAPI()
+    orderPre.value = data
   }
 }
 
@@ -72,7 +72,7 @@ const onOrderSubmit = async () => {
     return uni.showToast({ icon: 'none', title: '请选择收货地址' })
   }
   // 发送请求
-  const res = await postMemberOrderAPI({
+  const { data } = await postMemberOrderAPI({
     addressId: selecteAddress.value?.id,
     buyerMessage: buyerMessage.value,
     deliveryTimeType: activeDelivery.value.type,
@@ -81,7 +81,7 @@ const onOrderSubmit = async () => {
     payType: 1,
   })
   // 关闭当前页面，跳转到订单详情，传递订单id
-  uni.redirectTo({ url: `/pagesOrder/detail/detail?id=${res.result.id}` })
+  uni.redirectTo({ url: `/pagesOrder/detail/detail?id=${data.id}` })
 }
 </script>
 
@@ -94,7 +94,7 @@ const onOrderSubmit = async () => {
       hover-class="none"
       url="/pagesMember/address/address?from=order"
     >
-      <view class="user"> {{ selecteAddress.receiver }} {{ selecteAddress.contact }} </view>
+      <view class="user"> {{ selecteAddress.receiver }} {{ selecteAddress.receiverMobile }} </view>
       <view class="address"> {{ selecteAddress.fullLocation }} {{ selecteAddress.address }} </view>
       <text class="icon icon-right"></text>
     </navigator>

@@ -7,7 +7,7 @@ import { http } from '@/utils/http'
 export const postMemberCartAPI = (data: { skuId: string; count: number }) => {
   return http({
     method: 'POST',
-    url: '/member/cart',
+    url: '/app/cart/create',
     data,
   })
 }
@@ -16,9 +16,9 @@ export const postMemberCartAPI = (data: { skuId: string; count: number }) => {
  * 获取购物车列表
  */
 export const getMemberCartAPI = () => {
-  return http<CartItem[]>({
+  return http<{ list: CartItem[] }>({
     method: 'GET',
-    url: '/member/cart',
+    url: '/app/cart/list',
   })
 }
 
@@ -28,24 +28,25 @@ export const getMemberCartAPI = () => {
  */
 export const deleteMemberCartAPI = (data: { ids: string[] }) => {
   return http({
-    method: 'DELETE',
-    url: '/member/cart',
+    method: 'POST',
+    url: '/app/cart/delete',
     data,
   })
 }
 
 /**
  * 修改购物车单品
- * @param skuId SKUID
- * @param data selected 选中状态 count 商品数量
+ * @param data skuId SKUID selected 选中状态 count 商品数量
  */
-export const putMemberCartBySkuIdAPI = (
-  skuId: string,
-  data: { selected?: boolean; count?: number },
-) => {
+export const postMemberCartBySkuIdAPI = (data: {
+  id: string
+  skuId?: string
+  selected?: boolean
+  count?: number
+}) => {
   return http({
-    method: 'PUT',
-    url: `/member/cart/${skuId}`,
+    method: 'POST',
+    url: `/app/cart/update`,
     data,
   })
 }
@@ -54,10 +55,10 @@ export const putMemberCartBySkuIdAPI = (
  * 购物车全选/取消全选
  * @param data selected 是否选中
  */
-export const putMemberCartSelectedAPI = (data: { selected: boolean }) => {
+export const postMemberCartSelectedAPI = (data: { selected: boolean }) => {
   return http({
-    method: 'PUT',
-    url: '/member/cart/selected',
+    method: 'POST',
+    url: '/app/cart/selected',
     data,
   })
 }

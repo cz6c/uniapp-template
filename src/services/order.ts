@@ -13,7 +13,7 @@ import { http } from '@/utils/http'
 export const getMemberOrderPreAPI = () => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: '/member/order/pre',
+    url: '/app/order/pre',
   })
 }
 
@@ -27,7 +27,7 @@ export const getMemberOrderPreNowAPI = (data: {
 }) => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: '/member/order/pre/now',
+    url: '/app/order/nowPre',
     data,
   })
 }
@@ -39,7 +39,8 @@ export const getMemberOrderPreNowAPI = (data: {
 export const getMemberOrderRepurchaseByIdAPI = (id: string) => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: `/member/order/repurchase/${id}`,
+    url: `/app/order/repurchase`,
+    data: { id },
   })
 }
 
@@ -50,7 +51,7 @@ export const getMemberOrderRepurchaseByIdAPI = (id: string) => {
 export const postMemberOrderAPI = (data: OrderCreateParams) => {
   return http<{ id: string }>({
     method: 'POST',
-    url: '/member/order',
+    url: '/app/order/create',
     data,
   })
 }
@@ -62,19 +63,8 @@ export const postMemberOrderAPI = (data: OrderCreateParams) => {
 export const getMemberOrderByIdAPI = (id: string) => {
   return http<OrderResult>({
     method: 'GET',
-    url: `/member/order/${id}`,
-  })
-}
-
-/**
- * 模拟发货-内测版
- * @description 在DEV环境下使用，仅在订单状态为待发货时，可模拟发货，调用后订单状态修改为待收货，包含模拟物流。
- * @param id 订单id
- */
-export const getMemberOrderConsignmentByIdAPI = (id: string) => {
-  return http({
-    method: 'GET',
-    url: `/member/order/consignment/${id}`,
+    url: `/app/order/info`,
+    data: { id },
   })
 }
 
@@ -83,10 +73,11 @@ export const getMemberOrderConsignmentByIdAPI = (id: string) => {
  * @description 仅在订单状态为待收货时，可确认收货。
  * @param id 订单id
  */
-export const putMemberOrderReceiptByIdAPI = (id: string) => {
+export const postMemberOrderReceiptByIdAPI = (id: string) => {
   return http<OrderResult>({
-    method: 'PUT',
-    url: `/member/order/${id}/receipt`,
+    method: 'POST',
+    url: `/app/order/receipt`,
+    data: { id },
   })
 }
 
@@ -98,7 +89,8 @@ export const putMemberOrderReceiptByIdAPI = (id: string) => {
 export const getMemberOrderLogisticsByIdAPI = (id: string) => {
   return http<OrderLogisticResult>({
     method: 'GET',
-    url: `/member/order/${id}/logistics`,
+    url: `/app/order/logistics`,
+    data: { id },
   })
 }
 
@@ -109,8 +101,8 @@ export const getMemberOrderLogisticsByIdAPI = (id: string) => {
  */
 export const deleteMemberOrderAPI = (data: { ids: string[] }) => {
   return http({
-    method: 'DELETE',
-    url: `/member/order`,
+    method: 'POST',
+    url: `/app/order/delete`,
     data,
   })
 }
@@ -121,10 +113,10 @@ export const deleteMemberOrderAPI = (data: { ids: string[] }) => {
  * @param id 订单id
  * @param data cancelReason 取消理由
  */
-export const getMemberOrderCancelByIdAPI = (id: string, data: { cancelReason: string }) => {
+export const getMemberOrderCancelByIdAPI = (data: { id: string; cancelReason: string }) => {
   return http<OrderResult>({
-    method: 'PUT',
-    url: `/member/order/${id}/cancel`,
+    method: 'POST',
+    url: `/app/order/cancel`,
     data,
   })
 }
@@ -136,7 +128,7 @@ export const getMemberOrderCancelByIdAPI = (id: string, data: { cancelReason: st
 export const getMemberOrderAPI = (data: OrderListParams) => {
   return http<OrderListResult>({
     method: 'GET',
-    url: `/member/order`,
+    url: `/app/order/list`,
     data,
   })
 }

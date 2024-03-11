@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { OrderState } from '@/services/constants'
-import { orderStateList } from '@/services/constants'
-import { putMemberOrderReceiptByIdAPI } from '@/services/order'
-import { deleteMemberOrderAPI } from '@/services/order'
-import { getMemberOrderAPI } from '@/services/order'
+import {
+  postMemberOrderReceiptByIdAPI,
+  deleteMemberOrderAPI,
+  getMemberOrderAPI,
+} from '@/services/order'
 import { getPayMockAPI, getPayWxPayMiniPayAPI } from '@/services/pay'
 import type { OrderItem } from '@/types/order'
-import type { OrderListParams } from '@/types/order'
 import { onMounted, ref } from 'vue'
+import dayjs from 'dayjs'
+import { OrderState } from '@/services/constants'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
@@ -18,10 +19,9 @@ const props = defineProps<{
 }>()
 
 // 请求参数
-const queryParams: Required<OrderListParams> = {
+const queryParams = {
   page: 1,
-  pageSize: 5,
-  orderState: props.orderState,
+  limit: 5,
 }
 
 // 获取订单列表
@@ -38,13 +38,17 @@ const getMemberOrderData = async () => {
   // 发送请求前，标记为加载中
   isLoading.value = true
   // 发送请求
-  const res = await getMemberOrderAPI(queryParams)
+  const {
+    data: { list, page, limit, total },
+  } = await getMemberOrderAPI(
+    props.orderState === 0 ? queryParams : { ...queryParams, orderState: props.orderState },
+  )
   // 发送请求后，重置标记
   isLoading.value = false
   // 数组追加
-  orderList.value.push(...res.result.items)
+  orderList.value.push(...list)
   // 分页条件
-  if (queryParams.page < res.result.pages) {
+  if (page * limit < total) {
     // 页码累加
     queryParams.page++
   } else {
@@ -65,8 +69,8 @@ const onOrderPay = async (id: string) => {
   } else {
     // #ifdef MP-WEIXIN
     // 正式环境微信支付
-    const res = await getPayWxPayMiniPayAPI({ orderId: id })
-    await wx.requestPayment(res.result)
+    const { data } = await getPayWxPayMiniPayAPI({ orderId: id })
+    await wx.requestPayment(data)
     // #endif
 
     // #ifdef H5 || APP-PLUS
@@ -78,7 +82,7 @@ const onOrderPay = async (id: string) => {
   uni.showToast({ title: '支付成功' })
   // 更新订单状态
   const order = orderList.value.find((v) => v.id === id)
-  order!.orderState = OrderState.DaiFaHuo
+  order!.orderState = OrderState.待发货
 }
 
 // 确认收货
@@ -88,11 +92,11 @@ const onOrderConfirm = (id: string) => {
     confirmColor: '#27BA9B',
     success: async (res) => {
       if (res.confirm) {
-        await putMemberOrderReceiptByIdAPI(id)
+        await postMemberOrderReceiptByIdAPI(id)
         uni.showToast({ icon: 'success', title: '确认收货成功' })
         // 确认成功，更新为待评价
         const order = orderList.value.find((v) => v.id === id)
-        order!.orderState = OrderState.DaiPingJia
+        order!.orderState = OrderState.待评价
       }
     },
   })
@@ -146,12 +150,12 @@ const onRefresherrefresh = async () => {
     <view class="card" v-for="order in orderList" :key="order.id">
       <!-- 订单信息 -->
       <view class="status">
-        <text class="date">{{ order.createTime }}</text>
+        <text class="date">{{ dayjs(order.createTime).format('YYYY-MM-DD HH:mm') }}</text>
         <!-- 订单状态文字 -->
-        <text>{{ orderStateList[order.orderState].text }}</text>
+        <text>{{ OrderState[order.orderState] }}</text>
         <!-- 待评价/已完成/已取消 状态: 展示删除订单 -->
         <text
-          v-if="order.orderState >= OrderState.DaiPingJia"
+          v-if="order.orderState >= OrderState.待评价"
           class="icon-delete"
           @tap="onOrderDelete(order.id)"
         ></text>
@@ -181,7 +185,7 @@ const onRefresherrefresh = async () => {
       <!-- 订单操作按钮 -->
       <view class="action">
         <!-- 待付款状态：显示去支付按钮 -->
-        <template v-if="order.orderState === OrderState.DaiFuKuan">
+        <template v-if="order.orderState === OrderState.待付款">
           <view class="button primary" @tap="onOrderPay(order.id)">去支付</view>
         </template>
         <template v-else>
@@ -194,7 +198,7 @@ const onRefresherrefresh = async () => {
           </navigator>
           <!-- 待收货状态: 展示确认收货 -->
           <view
-            v-if="order.orderState === OrderState.DaiShouHuo"
+            v-if="order.orderState === OrderState.待收货"
             class="button primary"
             @tap="onOrderConfirm(order.id)"
           >

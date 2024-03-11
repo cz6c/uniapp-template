@@ -23,31 +23,8 @@ const query = defineProps<{
 // 获取商品详情信息
 const goods = ref<GoodsResult>()
 const getGoodsByIdData = async () => {
-  const res = await getGoodsByIdAPI(query.id)
-  goods.value = res.result
-  // SKU组件所需格式
-  localdata.value = {
-    _id: res.result.id,
-    name: res.result.name,
-    goods_thumb: res.result.mainPictures[0],
-    spec_list: res.result.specs.map((v) => {
-      return {
-        name: v.name,
-        list: v.values,
-      }
-    }),
-    sku_list: res.result.skus.map((v) => {
-      return {
-        _id: v.id,
-        goods_id: res.result.id,
-        goods_name: res.result.name,
-        image: v.picture,
-        price: v.price * 100, // 注意：需要乘以 100
-        stock: v.inventory,
-        sku_name_arr: v.specs.map((vv) => vv.valueName),
-      }
-    }),
-  }
+  const { data } = await getGoodsByIdAPI(query.id)
+  goods.value = data
 }
 
 // 页面加载
@@ -188,7 +165,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
       <view class="content">
         <view class="properties">
           <!-- 属性详情 -->
-          <view class="item" v-for="item in goods?.details.properties" :key="item.name">
+          <view class="item" v-for="item in goods?.properties" :key="item.name">
             <text class="label">{{ item.name }}</text>
             <text class="value">{{ item.value }}</text>
           </view>
@@ -196,7 +173,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
         <!-- 图片详情 -->
         <image
           class="image"
-          v-for="item in goods?.details.pictures"
+          v-for="item in goods?.pictures"
           :key="item"
           mode="widthFix"
           :src="item"
@@ -205,7 +182,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
     </view>
 
     <!-- 同类推荐 -->
-    <view class="similar panel">
+    <!-- <view class="similar panel">
       <view class="title">
         <text>同类推荐</text>
       </view>
@@ -225,7 +202,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
           </view>
         </navigator>
       </view>
-    </view>
+    </view> -->
   </scroll-view>
 
   <!-- 用户操作 -->
