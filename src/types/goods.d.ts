@@ -15,6 +15,8 @@ export type GoodsResult = {
   oldPrice: number
   /** 主图图片集合[ 主图图片链接 ] */
   mainPictures: string[]
+  /** 第一张主图片 */
+  picture: string
   /** 商品属性集合[ 属性信息 ] */
   properties: DetailsPropertyItem[]
   /** 商品详情图片集合[ 图片链接 ] */
@@ -52,7 +54,8 @@ export type SkuItem = {
   /** sku 编码 */
   skuCode: string
   /** 规格集合[ 规格信息 ] */
-  specVals: SkuSpecItem[]
+  specVals: string[]
+  specs: string[]
 }
 
 /** 可选规格信息 */
@@ -60,17 +63,5 @@ export type SpecItem = {
   /** 规格名称 */
   name: string
   /** 可选值集合[ 可选值信息 ] */
-  options: SpecValueItem[]
-}
-
-/** 可选值信息 */
-export type SpecValueItem = {
-  /** 是否可售 */
-  available: boolean
-  /** 可选值备注 */
-  desc: string
-  /** 可选值名称 */
-  name: string
-  /** 可选值图片链接 */
-  picture: string
+  options: string[]
 }

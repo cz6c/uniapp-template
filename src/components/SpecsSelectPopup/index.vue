@@ -1,154 +1,14 @@
-<script setup lang="ts">
+<script setup lang="ts" name="SpecsSelect">
 import { computed, ref, reactive } from 'vue'
+import { SpecAdjoinMatrix } from './sku'
+import type { GoodsResult, SkuItem } from '@/types/goods'
 
 const props = defineProps<{
-  // true 组件显示 false 组件隐藏
-  value: {
-    Type: Boolean
-    default: false
-  }
-  modelValue: {
-    Type: Boolean
-    default: false
-  }
-  // 该商品已抢完时的按钮文字
-  noStockText: {
-    Type: String
-    default: '该商品已抢完'
-  }
-  // 库存文字
-  stockText: {
-    Type: String
-    default: '库存'
-  }
-  // 默认单规格时的规格组名称
-  defaultSingleSkuName: {
-    Type: String
-    default: '默认'
-  }
-  // 模式 1:都显示  2:只显示购物车 3:只显示立即购买 4:显示缺货按钮 默认 1
-  mode: {
-    Type: Number
-    default: 1
-  }
-  // 点击遮罩是否关闭组件 true 关闭 false 不关闭 默认true
-  maskCloseAble: {
-    Type: Boolean
-    default: true
-  }
-  // 顶部圆角值
-  borderRadius: {
-    Type: [String, Number]
-    default: 0
-  }
-  // 最小购买数量 默认 1
-  minBuyNum: {
-    Type: [Number, String]
-    default: 1
-  }
-  // 最大购买数量 默认 100000
-  maxBuyNum: {
-    Type: [Number, String]
-    default: 100000
-  }
-  // 步进器步长 默认 1
-  stepBuyNum: {
-    Type: [Number, String]
-    default: 1
-  }
-  // 是否只能输入 step 的倍数
-  stepStrictly: {
-    Type: Boolean
-    default: false
-  }
-  // 本地数据源
-  localdata: {
-    type: Object
-  }
-  // 价格的字体颜色
-  priceColor: {
-    Type: String
-  }
-  // 立即购买按钮的文字
-  buyNowText: {
-    Type: String
-    default: '立即购买'
-  }
-  // 立即购买按钮的字体颜色
-  buyNowColor: {
-    Type: String
-  }
-  // 立即购买按钮的背景颜色
-  buyNowBackgroundColor: {
-    Type: String
-  }
-  // 加入购物车按钮的文字
-  addCartText: {
-    Type: String
-    default: '加入购物车'
-  }
-  // 加入购物车按钮的字体颜色
-  addCartColor: {
-    Type: String
-  }
-  // 加入购物车按钮的背景颜色
-  addCartBackgroundColor: {
-    Type: String
-  }
-  // 不可点击时,按钮的样式
-  disableStyle: {
-    Type: Object
-    default: null
-  }
-  // 按钮点击时的样式
-  activedStyle: {
-    Type: Object
-    default: null
-  }
-  // 按钮常态的样式
-  btnStyle: {
-    Type: Object
-    default: null
-  }
-  // 是否显示右上角关闭按钮
-  showClose: {
-    Type: Boolean
-    default: true
-  }
-  // 关闭按钮的图片地址 https://img.alicdn.com/imgextra/i1/121022687/O1CN01ImN0O11VigqwzpLiK_!!121022687.png
-  closeImage: {
-    Type: String
-    default: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAYAAADFw8lbAAAEyUlEQVR42sSZeWwNURTGp4OqtBo7sSXELragdkpQsRRJ1Zr4hyJiJ9YgxNIg1qANiT+E1i5IY0kVVWtQEbuEKLFGUSH27/ANN5PXmTvzupzkl/tm8t6b7517lnvvC0lKSjJ8WmnQAUSDFqABqALKgl8gD7wE90E2SAeXwFf1SxISErQeVtKHwCgwFsSDSIf3hYFKoCkYDBaDdyAViHdueHmoF6FtwDLQ23b/E7gM7oIcejIERIDaoBFoC8qA8mA8SQNz6W1XC9GY+nCQCCYAk/c+gF0gBZwH312+IxR0BCPBUIaH2A+wHsxHCHxx+gLT5QGN6a2JfG8uvVCDws9oiDQYlxkMGfHyQvARlADTwcXk5OT6foV2kS8ATXidymlcyen1a/Jjl9IJh3hPkjELYqO8Cu0KjjNZvtETw5jFBWXPmGSTGQKSeOn5iQ0kVLL0CINfPNcPbDMKyRCbGzEMBJ+ZD8cChYFdqGTqfsWT8otPGoVsEHsMwxDFs3shNsxJ6BrQ0Po8OGUUkVHsNCVml+cntB1jUWwn2GEUsTEMrASbDK+2CCQ0kYX6nfLLisMmKqUr0S60M+jG10vAm+JSCa8+x7CKlzHwaktV6DiObzUzPJIxFO1BQ12wGtTReO9GetVgY/kjNJzZbcWmTjHfxw51AsRqvL8eOAtmsJuFu3g1l+1ZLB5eDTVZ3K0P7tL0TkWOpSg61kVkBtuuNRthGs+wtJST5aQI7cEbkkRXNYVKgX6kIdYuUhYzMQwxN8tiExCLFqHNeSF9/aem0BzGp5PYQCJ7c/Gsk1RfuSD6U1dNpcDf9ZigTmKbMRZ9iVTsHscGJluW2FMf1SSQWGnBmaB6kCJVTVVNJZE++Cx9drEllS1KMCINpURFmEbBWA63Fz9s95cGIdJgp/zXmT4pZcOvSUzuZttTbblmnc3PIjjmidDXvKgdhMh0JdbzuCjWrbNOVovjS5P7bkPJ/mBESkz2BO0166ybNeJ431S2q+01NntuIq3E0amzjiZtk9tssWyTDzO4525bACK9NAUn68TtkNhpEXpOSagRml+S6iLSSeweHv242Qhl13rRyvoDvDlKyTQny/ZQJ+1iH7vVbEx7OR5UiKVIO7VicgvHCtwrudloMIV7/0uadVYW57O4Wvvi8v4pymlKkrpwvsDeLLZAY2pkwbAB3PSQfC+4cH7l4k1ZH8zkZRq8ecO+Z5rN40JJqnXFuGfaxPCTLjcn0OZOpnArXw8HY4paIbw5CcMgXq6HN2/mt6+XGLrN15tBryIUGavMpCTrfKcDCKkAceA9S8nhAOehhSUyhXpkBxxnP4YM1InugP7cBkjBPcqVUWFYCEROxXiQz5JlXV+IfKh7mpfJac+lZ6V87QXVClBkTc7YWsWTPSDyitfzUTlJlj8TbvE6jluDOdwZ+jX57GLO3ADeuyZrDYi86vV81FD2UVGsmT+5Zl0BnkhoseOEaogL46pqO4v/IqUEyalIR4h85BgjHv6+aUWRMbb7EstX6O0cpT1Gco0ry8fWygLDMjmDnQeBt3Qe7uVfkeugDwVLcsVzGsuwLXbV+I63XNAkG5r/hvgRqgqWs6pJPKrsbvz/Q6yyun0w/h6lP+BnzrCpfPMT2L8FGAA7k1GZ/vnaqAAAAABJRU5ErkJggg=='
-  }
-  // 是否隐藏库存显示
-  hideStock: {
-    Type: Boolean
-    default: false
-  }
-  // 颜色主题
-  theme: {
-    Type: String
-    default: 'default'
-  }
-  // 请求中的提示
-  actionTips: {
-    Type: String
-    default: '请求中...'
-  }
-  // 默认选中的SKU
-  defaultSelect: {
-    Type: Object
-  }
-  // 每次选择完SKU后，购买数量归1，如果有最小购买数量，则设置为最小购买数量
-  selectedInit: {
-    Type: Boolean
-    default: false
-  }
-  // 是否开启底部安全区适配，默认true
-  safeAreaInsetBottom: {
-    Type: Boolean
-    default: true
-  }
+  modelValue: boolean
+  goodsInfo: GoodsResult
+  safeAreaInsetBottom: boolean
+  borderRadius: string
+  mode: 1 | 2 | 3 | 4 //模式 1:都显示  2:只显示购物车 3:只显示立即购买 4:显示缺货按钮 默认 1
 }>()
 
 const emit = defineEmits([
@@ -164,155 +24,186 @@ const emit = defineEmits([
   'num-change',
 ])
 
-const state = reactive({
-  safeBottom: 0, // 留出底部安全距离
-  loading: false, // 组件是否加载
-  goodsInfo: {}, // 商品信息
-  isShow: false, // true 显示 false 隐藏
-  initKey: true, // 是否需要初始化 true 是 false 否
-  selectArr: [], // 存放被选中的值
-  subIndex: [], // 是否选中 因为不确定是多规格还是单规格，所以这里定义数组来判断
-  selectShop: {}, // 存放最后选中的商品
-  selectNum: this.minBuyNum || 1, // 选中数量
-  outFoStock: false, // 是否全部sku都缺货
-  openTime: 0,
+const show = computed({
+  get() {
+    return props.modelValue
+  },
+  set(val: boolean) {
+    emit('update:modelValue', val)
+  },
+})
+
+interface State {
+  selectSpecs: string[]
+  optionSpecs: string[]
+  specAdjoinMatrix: SpecAdjoinMatrix<SkuItem> | null
+  loading: boolean
+  safeBottom: number
+  selectShop: SkuItem | null
+  themeColor: any
+}
+
+const state = reactive<State>({
+  selectSpecs: [],
+  optionSpecs: [],
+  specAdjoinMatrix: null,
+  loading: false,
+  safeBottom: 0,
+  selectShop: null,
   themeColor: {
-    // 默认主题
-    default: {
-      priceColor: 'rgb(254, 86, 10)',
-      buyNowColor: '#ffffff',
-      buyNowBackgroundColor: 'rgb(254, 86, 10)',
-      addCartColor: '#ffffff',
-      addCartBackgroundColor: 'rgb(255, 148, 2)',
-      btnStyle: {
-        color: '#333333',
-        borderColor: '#f4f4f4',
-        backgroundColor: '#ffffff',
-      },
-      activedStyle: {
-        color: 'rgb(254, 86, 10)',
-        borderColor: 'rgb(254, 86, 10)',
-        backgroundColor: 'rgba(254,86,10,0.1)',
-      },
-      disableStyle: {
-        color: '#c3c3c3',
-        borderColor: '#f6f6f6',
-        backgroundColor: '#f6f6f6',
-      },
+    priceColor: 'rgb(254, 86, 10)',
+    buyNowColor: '#ffffff',
+    buyNowBackgroundColor: 'rgb(254, 86, 10)',
+    addCartColor: '#ffffff',
+    addCartBackgroundColor: 'rgb(255, 148, 2)',
+    btnStyle: {
+      color: '#333333',
+      borderColor: '#f4f4f4',
+      backgroundColor: '#ffffff',
+    },
+    activedStyle: {
+      color: 'rgb(254, 86, 10)',
+      borderColor: 'rgb(254, 86, 10)',
+      backgroundColor: 'rgba(254,86,10,0.1)',
+    },
+    disableStyle: {
+      color: '#c3c3c3',
+      borderColor: '#f6f6f6',
+      backgroundColor: '#f6f6f6',
     },
   },
 })
+
+function initData() {
+  const { specs, skus } = props.goodsInfo
+  const specList = specs.map((c) => ({ title: c.name, list: c.options }))
+  const skuList = skus.map((c) => ({ ...c, specs: c.specVals }))
+  state.selectSpecs = Array(specs.length).fill('')
+  // 创建一个规格矩阵
+  state.specAdjoinMatrix = new SpecAdjoinMatrix(specList, skuList)
+  // 获得可选项表
+  state.optionSpecs = state.specAdjoinMatrix.getSpecscOptions(state.selectSpecs)
+}
+initData()
+
+function handleClick(text: string, index: number) {
+  // 选中/反选
+  state.selectSpecs[index] = state.selectSpecs[index] === text ? '' : text
+  // 重新获取可选项表
+  state.optionSpecs = state.specAdjoinMatrix!.getSpecscOptions(state.selectSpecs)
+  // 获取价格和库存
+  getPricesAndStock()
+}
+
+const price = ref('')
+const stock = ref(0)
+function getPricesAndStock() {
+  const skus = state.specAdjoinMatrix!.filterSkus(state.selectSpecs)
+  console.log(skus)
+  if (skus.length === 1) {
+    price.value = `￥${skus[0].price}`
+    stock.value = skus[0].inventory
+  } else {
+    const prices = skus.map(({ price }) => price)
+    const max = Math.max(...prices)
+    const min = Math.min(...prices)
+    price.value = `￥${min}-${max}`
+    stock.value = skus.reduce((pre, { inventory }) => (pre += inventory), 0)
+  }
+}
+getPricesAndStock()
+
+function init() {
+  initData()
+  getPricesAndStock()
+}
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
 // 底部安全距离
 state.safeBottom = safeAreaInsets.bottom
 
-// 初始化
-function init(notAutoClick) {
-  let that = this
-  // 清空之前的数据
-  that.selectArr = []
-  that.subIndex = []
-  that.selectShop = {}
-  that.selectNum = that.minBuyNum || 1
-  that.outFoStock = false
-  that.shopItemInfo = {}
-  let specListName = that.specListName
-  that.goodsInfo[specListName].map((item) => {
-    that.selectArr.push('')
-    that.subIndex.push(-1)
-  })
-  that.checkItem() // 计算sku里面规格形成路径
-  that.checkInpath(-1) // 传-1是为了不跳过循环
-  if (!notAutoClick) that.autoClickSku() // 自动选择sku策略
+function moveHandle() {
+  //禁止父元素滑动
 }
-
-function updateValue(value) {
-  let that = this
-  if (value) {
-    that.$emit('open', true)
-    that.$emit('input', true)
-    that.$emit('update:modelValue', true)
-  } else {
-    that.$emit('input', false)
-    that.$emit('close', 'close')
-    that.$emit('update:modelValue', false)
-  }
+function stop() {
+  //用于阻止冒泡
 }
-async function open() {}
 // 监听 - 弹出层收起
-function close(s) {}
-
-// sku按钮的点击事件
-function skuClick(value, index1, index2) {}
+function close() {
+  show.value = false
+}
 // 加入购物车
 function addCart() {}
 // 立即购买
 function buyNow() {}
-// 弹窗
-function toast(title, icon) {
-  uni.showToast({
-    title: title,
-    icon: icon,
-  })
-}
-// 自动选择sku前提是只有一组sku,默认自动选择最前面的有库存的sku
-function autoClickSku() {}
-// 主题颜色
-function themeColorFn(name) {
-  let that = this
-  let { theme, themeColor } = that
-  let color = that[name] ? that[name] : themeColor[theme][name]
-  return color
-}
-/**
- * 主动方法 - 设置sku
- */
-function selectSku(obj = {}) {}
 
 // 图片预览
 function previewImage() {
-  let that = this
-  let { selectShop, goodsInfo, goodsThumbName } = that
-  let src = selectShop.image ? selectShop.image : goodsInfo[goodsThumbName]
+  let src = state.selectShop?.picture ? state.selectShop?.picture : props.goodsInfo.picture
   if (src) {
     uni.previewImage({
       urls: [src],
     })
   }
 }
-function numChange(e) {
-  this.$emit('num-change', e.value)
+// 主题颜色
+function themeColorFn(name: string) {
+  let color = state.themeColor[name]
+  return color
 }
+
+const priceCom = computed(() => '')
+const stockCom = computed(() => '')
+
+defineExpose({
+  init,
+})
 </script>
 
 <template>
+  <!-- <div class="container">
+    <div>价格：{{ price }}</div>
+    <div>库存：{{ stock }}</div>
+    <div v-for="({ title, list }, index) in props.specList" :key="index">
+      <p class="title">{{ title }}</p>
+      <div class="spec-box">
+        <button
+          v-for="(ele, listIndex) in list"
+          :key="listIndex"
+          :disabled="!state.optionSpecs.includes(ele)"
+          :class="{ action: state.selectSpecs.includes(ele) }"
+          @click="handleClick(ele, index)"
+        >
+          {{ ele }}
+        </button>
+      </div>
+    </div>
+  </div> -->
   <view
     class="vk-data-goods-sku-popup"
     catchtouchmove="true"
-    :class="valueCom && loading ? 'show' : 'none'"
+    :class="show ? 'show' : 'none'"
     @touchmove.stop.prevent="moveHandle"
     @click.stop="stop"
   >
     <!-- 页面内容开始 -->
-    <view class="mask" @click="close('mask')"></view>
+    <view class="mask" @click="close"></view>
     <view
       class="layer attr-content"
       :class="{ 'safe-area-inset-bottom': safeAreaInsetBottom }"
       :style="{
         borderRadius: borderRadius + 'rpx ' + borderRadius + 'rpx 0 0',
-        paddingBottom: safeBottom + 'px',
+        paddingBottom: state.safeBottom + 'px',
       }"
     >
       <view class="specification-wrapper">
-        <scroll-view class="specification-wrapper-content" scroll-y="true">
+        <scroll-view class="specification-wrapper-content" :scroll-y="true">
           <view class="specification-header">
             <view class="specification-left">
               <image
                 class="product-img"
-                :src="selectShop.image ? selectShop.image : goodsInfo[goodsThumbName]"
-                :style="{ backgroundColor: goodsThumbBackgroundColor }"
+                :src="state.selectShop?.picture ? state.selectShop?.picture : goodsInfo.picture"
                 mode="aspectFill"
                 @click="previewImage"
               ></image>
@@ -324,44 +215,43 @@ function numChange(e) {
                   priceCom
                 }}</text>
               </view>
-              <view class="inventory" v-if="!hideStock">{{ stockText }}：{{ stockCom }}</view>
-              <view class="inventory" v-else></view>
-              <view class="choose" v-show="isManyCom">已选：{{ selectArr.join(' ') }}</view>
+              <view class="inventory">库存：{{ stockCom }}</view>
+              <view class="choose">已选：{{ state.selectSpecs.join(' ') }}</view>
             </view>
           </view>
 
           <view class="specification-content">
             <view
-              v-show="isManyCom"
               class="specification-item"
-              v-for="(item, index1) in goodsInfo[specListName]"
+              v-for="(item, index1) in goodsInfo.specs"
               :key="index1"
             >
               <view class="item-title">{{ item.name }}</view>
               <view class="item-wrapper">
                 <view
                   class="item-content"
-                  v-for="(item_value, index2) in item.list"
+                  v-for="(item_value, index2) in item.options"
                   :key="index2"
-                  :class="[
-                    item_value.ishow ? '' : 'noactived',
-                    subIndex[index1] == index2 ? 'actived' : '',
-                  ]"
+                  :class="{
+                    // item_value.ishow ? '' : 'noactived',
+                    // subIndex[index1] == index2 ? 'actived' : '',
+                    actived: state.selectSpecs.includes(item_value),
+                  }"
                   :style="[
-                    item_value.ishow ? '' : themeColorFn('disableStyle'),
-                    item_value.ishow ? themeColorFn('btnStyle') : '',
-                    subIndex[index1] == index2 ? themeColorFn('activedStyle') : '',
+                    // item_value.ishow ? '' : themeColorFn('disableStyle'),
+                    // item_value.ishow ? themeColorFn('btnStyle') : '',
+                    // subIndex[index1] == index2 ? themeColorFn('activedStyle') : '',
                   ]"
-                  @click="skuClick(item_value, index1, index2)"
+                  @click="handleClick(item_value, index1)"
                 >
-                  {{ item_value.name }}
+                  {{ item_value }}
                 </view>
               </view>
             </view>
             <view class="number-box-view">
               <view style="flex: 1">数量</view>
               <view style="flex: 4; text-align: right">
-                <vk-data-input-number-box
+                <!-- <vk-data-input-number-box
                   v-model="selectNum"
                   :min="minBuyNum || 1"
                   :max="maxBuyNumCom"
@@ -369,14 +259,11 @@ function numChange(e) {
                   :step-strictly="stepStrictly"
                   :positive-integer="true"
                   @change="numChange"
-                ></vk-data-input-number-box>
+                ></vk-data-input-number-box> -->
               </view>
             </view>
           </view>
         </scroll-view>
-        <view class="close" @click="close('close')" v-if="showClose != false"
-          ><image class="close-item" :src="closeImage"></image
-        ></view>
       </view>
 
       <!-- <view class="btn-wrapper" v-if="outFoStock || mode == 4">
@@ -384,7 +271,7 @@ function numChange(e) {
           noStockText
         }}</view>
       </view> -->
-      <view class="btn-wrapper" v-else-if="mode == 1">
+      <view class="btn-wrapper" v-if="mode == 1">
         <view
           class="sure add-cart"
           style="border-radius: 38rpx 0rpx 0rpx 38rpx"
@@ -394,7 +281,7 @@ function numChange(e) {
           }"
           @click="addCart"
         >
-          {{ addCartText }}
+          加入购物车
         </view>
 
         <view
@@ -406,7 +293,7 @@ function numChange(e) {
           }"
           @click="buyNow"
         >
-          {{ buyNowText }}
+          立即购买
         </view>
       </view>
       <view class="btn-wrapper" v-else-if="mode == 2">
@@ -418,7 +305,7 @@ function numChange(e) {
           }"
           @click="addCart"
         >
-          {{ addCartText }}
+          加入购物车
         </view>
       </view>
       <view class="btn-wrapper" v-else-if="mode == 3">
@@ -430,7 +317,7 @@ function numChange(e) {
           }"
           @click="buyNow"
         >
-          {{ buyNowText }}
+          立即购买
         </view>
       </view>
     </view>
@@ -438,7 +325,10 @@ function numChange(e) {
   </view>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
+.action {
+  color: blue;
+}
 /*  sku弹出层 */
 .vk-data-goods-sku-popup {
   position: fixed;
@@ -615,19 +505,6 @@ function numChange(e) {
             display: flex;
             padding-top: 30rpx;
           }
-        }
-      }
-      .close {
-        position: absolute;
-        top: 30rpx;
-        right: 25rpx;
-        width: 50rpx;
-        height: 50rpx;
-        text-align: center;
-        line-height: 50rpx;
-        .close-item {
-          width: 50rpx;
-          height: 50rpx;
         }
       }
     }

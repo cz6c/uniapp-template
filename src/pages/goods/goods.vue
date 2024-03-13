@@ -11,6 +11,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import AddressPanel from './components/AddressPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
+import SpecsSelectPopup from '@/components/SpecsSelectPopup/index.vue'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
@@ -24,7 +25,7 @@ const query = defineProps<{
 const goods = ref<GoodsResult>()
 const getGoodsByIdData = async () => {
   const { data } = await getGoodsByIdAPI(query.id)
-  goods.value = data
+  goods.value = { ...data, picture: data.mainPictures[0] }
 }
 
 // 页面加载
@@ -98,7 +99,8 @@ const onBuyNow = (ev: SkuPopupEvent) => {
 
 <template>
   <!-- SKU弹窗组件 -->
-  <vk-data-goods-sku-popup
+  <SpecsSelectPopup ref="refSpecsSelect" v-model="isShowSku" :goodsInfo="goods" />
+  <!-- <vk-data-goods-sku-popup
     v-model="isShowSku"
     :localdata="localdata"
     :mode="mode"
@@ -112,7 +114,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
     }"
     @add-cart="onAddCart"
     @buy-now="onBuyNow"
-  />
+  /> -->
   <scroll-view enable-back-to-top scroll-y class="viewport">
     <!-- 基本信息 -->
     <view class="goods">
