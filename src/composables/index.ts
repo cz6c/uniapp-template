@@ -1,4 +1,4 @@
-import type { XtxGuessInstance } from '@/types/components'
+import type { XtxGuessInstance } from '@/components'
 import { ref } from 'vue'
 
 /**

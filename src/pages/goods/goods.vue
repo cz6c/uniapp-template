@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import type {
-  SkuPopupEvent,
-  SkuPopupInstance,
-  SkuPopupLocaldata,
-} from '@/components/vk-data-goods-sku-popup/vk-data-goods-sku-popup'
+import type { SkuPopupEvent } from '@/components/SpecsSelectPopup'
+import { SkuMode } from '@/components/SpecsSelectPopup'
 import { postMemberCartAPI } from '@/services/cart'
 import { getGoodsByIdAPI } from '@/services/goods'
-import type { GoodsResult } from '@/types/goods'
+import type { GoodsResult, SkuItem } from '@/types/goods'
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import AddressPanel from './components/AddressPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
-import SpecsSelectPopup from '@/components/SpecsSelectPopup/index.vue'
+import type { SkuPopupInstance } from '@/components'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
@@ -22,10 +19,10 @@ const query = defineProps<{
 }>()
 
 // 获取商品详情信息
-const goods = ref<GoodsResult>()
+const goods = ref({} as GoodsResult)
 const getGoodsByIdData = async () => {
   const { data } = await getGoodsByIdAPI(query.id)
-  goods.value = { ...data, picture: data.mainPictures[0] }
+  goods.value = data
 }
 
 // 页面加载
@@ -53,7 +50,6 @@ const popup = ref<{
   open: (type?: UniHelper.UniPopupType) => void
   close: () => void
 }>()
-
 // 弹出层条件渲染
 const popupName = ref<'address' | 'service'>()
 const openPopup = (name: typeof popupName.value) => {
@@ -61,17 +57,11 @@ const openPopup = (name: typeof popupName.value) => {
   popupName.value = name
   popup.value?.open()
 }
+
 // 是否显示SKU组件
 const isShowSku = ref(false)
-// 商品信息
-const localdata = ref({} as SkuPopupLocaldata)
 // 按钮模式
-enum SkuMode {
-  Both = 1,
-  Cart = 2,
-  Buy = 3,
-}
-const mode = ref<SkuMode>(SkuMode.Cart)
+const mode = ref<SkuMode>(SkuMode.CartAndCart)
 // 打开SKU弹窗修改按钮模式
 const openSkuPopup = (val: SkuMode) => {
   // 显示SKU弹窗
@@ -80,41 +70,32 @@ const openSkuPopup = (val: SkuMode) => {
   mode.value = val
 }
 // SKU组件实例
-const skuPopupRef = ref<SkuPopupInstance>()
+const refSpecsSelect = ref<SkuPopupInstance>()
 // 计算被选中的值
 const selectArrText = computed(() => {
-  return skuPopupRef.value?.selectArr?.join(' ').trim() || '请选择商品规格'
+  return refSpecsSelect.value?.selectShop?.specVals.join(' ').trim() || '请选择商品规格'
 })
 // 加入购物车事件
 const onAddCart = async (ev: SkuPopupEvent) => {
-  await postMemberCartAPI({ skuId: ev._id, count: ev.buy_num })
+  await postMemberCartAPI({ skuId: ev.id, count: ev.buyNum })
   uni.showToast({ title: '添加成功' })
-  isShowSku.value = false
 }
 // 立即购买
 const onBuyNow = (ev: SkuPopupEvent) => {
-  uni.navigateTo({ url: `/pagesOrder/create/create?skuId=${ev._id}&count=${ev.buy_num}` })
+  uni.navigateTo({ url: `/pagesOrder/create/create?skuId=${ev.id}&count=${ev.buyNum}` })
 }
 </script>
 
 <template>
   <!-- SKU弹窗组件 -->
-  <SpecsSelectPopup ref="refSpecsSelect" v-model="isShowSku" :goodsInfo="goods" />
-  <!-- <vk-data-goods-sku-popup
+  <SpecsSelectPopup
+    ref="refSpecsSelect"
     v-model="isShowSku"
-    :localdata="localdata"
     :mode="mode"
-    add-cart-background-color="#FFA868"
-    buy-now-background-color="#27BA9B"
-    ref="skuPopupRef"
-    :actived-style="{
-      color: '#27BA9B',
-      borderColor: '#27BA9B',
-      backgroundColor: '#E9F8F5',
-    }"
+    :goodsInfo="goods"
     @add-cart="onAddCart"
     @buy-now="onBuyNow"
-  /> -->
+  />
   <scroll-view enable-back-to-top scroll-y class="viewport">
     <!-- 基本信息 -->
     <view class="goods">
@@ -144,7 +125,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
 
       <!-- 操作面板 -->
       <view class="action">
-        <view @tap="openSkuPopup(SkuMode.Both)" class="item arrow">
+        <view @tap="openSkuPopup(SkuMode.CartAndCart)" class="item arrow">
           <text class="label">选择</text>
           <text class="text ellipsis"> {{ selectArrText }} </text>
         </view>
@@ -464,24 +445,6 @@ page {
   justify-content: space-between;
   align-items: center;
   box-sizing: content-box;
-  .buttons {
-    display: flex;
-    & > view {
-      width: 220rpx;
-      text-align: center;
-      line-height: 72rpx;
-      font-size: 26rpx;
-      color: #fff;
-      border-radius: 72rpx;
-    }
-    .addcart {
-      background-color: #ffa868;
-    }
-    .payment {
-      background-color: #27ba9b;
-      margin-left: 20rpx;
-    }
-  }
   .icons {
     padding-right: 20rpx;
     display: flex;
@@ -506,6 +469,24 @@ page {
     text {
       display: block;
       font-size: 34rpx;
+    }
+  }
+  .buttons {
+    display: flex;
+    & > view {
+      width: 220rpx;
+      text-align: center;
+      line-height: 72rpx;
+      font-size: 26rpx;
+      color: #fff;
+    }
+    .addcart {
+      background: #ff9402;
+      border-radius: 38rpx 0rpx 0rpx 38rpx;
+    }
+    .payment {
+      border-radius: 0rpx 38rpx 38rpx 0rpx;
+      background: #fe560a;
     }
   }
 }

@@ -6,8 +6,6 @@ export type SpecsType = {
 export type SkuType = {
   specs: Array<string>
   specsPrimes?: number
-  // price: number
-  // stock: number
 }
 
 // 根据邻接矩阵的概念，实现规格选择
@@ -17,9 +15,13 @@ export class SpecAdjoinMatrix<T extends SkuType> {
   private quantity: number // 矩阵长度
   private adjoinArray: Array<number> // 矩阵数组
   private specList: Array<SpecsType> // 规格列表
-  private specCombinationList: Array<T> // sku列表
+  private specCombinationList: Array<T> // sku列表 只传有库存的
   private attributeMapPrimes: Record<string, number> // 规格值和质数映射关系
 
+  /**
+   * @param {Array} specList 规格列表
+   * @param {Array} specCombinationList sku列表 只传有库存的
+   */
   constructor(specList: Array<SpecsType>, specCombinationList: Array<T>) {
     // 邻接矩阵初始化
     this.vertex = specList.reduce(

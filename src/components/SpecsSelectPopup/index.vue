@@ -1,28 +1,22 @@
-<script setup lang="ts" name="SpecsSelect">
-import { computed, ref, reactive } from 'vue'
+<script setup lang="ts">
+import { computed, ref, reactive, watch } from 'vue'
 import { SpecAdjoinMatrix } from './sku'
 import type { GoodsResult, SkuItem } from '@/types/goods'
+import InputNumberBox from './components/InputNumberBox.vue'
+import { SkuMode } from './index.d'
 
-const props = defineProps<{
+interface Props {
   modelValue: boolean
   goodsInfo: GoodsResult
-  safeAreaInsetBottom: boolean
-  borderRadius: string
-  mode: 1 | 2 | 3 | 4 //模式 1:都显示  2:只显示购物车 3:只显示立即购买 4:显示缺货按钮 默认 1
-}>()
+  mode: SkuMode
+  borderRadius?: number
+}
 
-const emit = defineEmits([
-  'update:modelValue',
-  'input',
-  'update-goods',
-  'open',
-  'close',
-  'add-cart',
-  'buy-now',
-  'cart',
-  'buy',
-  'num-change',
-])
+const props = withDefaults(defineProps<Props>(), {
+  borderRadius: 10,
+})
+
+const emit = defineEmits(['update:modelValue', 'open', 'add-cart', 'buy-now', 'sure'])
 
 const show = computed({
   get() {
@@ -33,95 +27,92 @@ const show = computed({
   },
 })
 
+watch(
+  () => show.value,
+  (val) => {
+    console.log(val)
+    if (val) {
+      initData()
+      emit('open')
+    }
+  },
+)
+
 interface State {
+  specAdjoinMatrix: SpecAdjoinMatrix<SkuItem> | null
   selectSpecs: string[]
   optionSpecs: string[]
-  specAdjoinMatrix: SpecAdjoinMatrix<SkuItem> | null
-  loading: boolean
-  safeBottom: number
-  selectShop: SkuItem | null
-  themeColor: any
+  filterSkus: SkuItem[]
 }
 
 const state = reactive<State>({
+  specAdjoinMatrix: null,
   selectSpecs: [],
   optionSpecs: [],
-  specAdjoinMatrix: null,
-  loading: false,
-  safeBottom: 0,
-  selectShop: null,
-  themeColor: {
-    priceColor: 'rgb(254, 86, 10)',
-    buyNowColor: '#ffffff',
-    buyNowBackgroundColor: 'rgb(254, 86, 10)',
-    addCartColor: '#ffffff',
-    addCartBackgroundColor: 'rgb(255, 148, 2)',
-    btnStyle: {
-      color: '#333333',
-      borderColor: '#f4f4f4',
-      backgroundColor: '#ffffff',
-    },
-    activedStyle: {
-      color: 'rgb(254, 86, 10)',
-      borderColor: 'rgb(254, 86, 10)',
-      backgroundColor: 'rgba(254,86,10,0.1)',
-    },
-    disableStyle: {
-      color: '#c3c3c3',
-      borderColor: '#f6f6f6',
-      backgroundColor: '#f6f6f6',
-    },
-  },
+  filterSkus: [],
 })
+const selectShop = ref<SkuItem | null>(null)
 
 function initData() {
   const { specs, skus } = props.goodsInfo
   const specList = specs.map((c) => ({ title: c.name, list: c.options }))
-  const skuList = skus.map((c) => ({ ...c, specs: c.specVals }))
+  const skuList = skus.map((c) => ({ ...c, specs: c.specVals })).filter((_) => _.inventory > 1)
   state.selectSpecs = Array(specs.length).fill('')
   // 创建一个规格矩阵
   state.specAdjoinMatrix = new SpecAdjoinMatrix(specList, skuList)
   // 获得可选项表
   state.optionSpecs = state.specAdjoinMatrix.getSpecscOptions(state.selectSpecs)
+  // 默认选第一个规格项中的第一个有库存的规格子项
+  const specVal = skuList[0].specs[0]
+  handleClick(0, specVal)
 }
-initData()
 
-function handleClick(text: string, index: number) {
+/**
+ * @description: 选择规格子项
+ * @param {*} index 所选规格项在规格数组中的索引
+ * @param {*} text 规格子项名称
+ */
+function handleClick(index: number, text: string) {
+  // 禁用不可选
+  if (!state.optionSpecs.includes(text)) return
   // 选中/反选
   state.selectSpecs[index] = state.selectSpecs[index] === text ? '' : text
   // 重新获取可选项表
   state.optionSpecs = state.specAdjoinMatrix!.getSpecscOptions(state.selectSpecs)
-  // 获取价格和库存
-  getPricesAndStock()
+  // 筛选符合的sku列表
+  state.filterSkus = state.specAdjoinMatrix!.filterSkus(state.selectSpecs)
+  if (state.filterSkus.length === 1) selectShop.value = state.filterSkus[0]
+  else selectShop.value = null
 }
 
-const price = ref('')
-const stock = ref(0)
-function getPricesAndStock() {
-  const skus = state.specAdjoinMatrix!.filterSkus(state.selectSpecs)
-  console.log(skus)
-  if (skus.length === 1) {
-    price.value = `￥${skus[0].price}`
-    stock.value = skus[0].inventory
+// 计算价格
+const priceCom = computed(() => {
+  let price = ''
+  if (state.filterSkus.length === 1) {
+    price = `${state.filterSkus[0].price}`
   } else {
-    const prices = skus.map(({ price }) => price)
+    const prices = state.filterSkus.map(({ price }) => price)
     const max = Math.max(...prices)
     const min = Math.min(...prices)
-    price.value = `￥${min}-${max}`
-    stock.value = skus.reduce((pre, { inventory }) => (pre += inventory), 0)
+    price = `${min}-${max}`
   }
-}
-getPricesAndStock()
+  return price
+})
+// 计算库存
+const stockCom = computed(() => {
+  let stock = 0
+  if (state.filterSkus.length === 1) {
+    stock = state.filterSkus[0].inventory
+  } else {
+    stock = state.filterSkus.reduce((pre, { inventory }) => (pre += inventory), 0)
+  }
+  return stock
+})
 
-function init() {
-  initData()
-  getPricesAndStock()
-}
-
-// 获取屏幕边界到安全区域距离
-const { safeAreaInsets } = uni.getSystemInfoSync()
-// 底部安全距离
-state.safeBottom = safeAreaInsets.bottom
+// // 获取屏幕边界到安全区域距离
+// const { safeAreaInsets } = uni.getSystemInfoSync()
+// // 底部安全距离
+// state.safeBottom = safeAreaInsets.bottom
 
 function moveHandle() {
   //禁止父元素滑动
@@ -129,72 +120,51 @@ function moveHandle() {
 function stop() {
   //用于阻止冒泡
 }
-// 监听 - 弹出层收起
-function close() {
-  show.value = false
-}
-// 加入购物车
-function addCart() {}
-// 立即购买
-function buyNow() {}
-
 // 图片预览
 function previewImage() {
-  let src = state.selectShop?.picture ? state.selectShop?.picture : props.goodsInfo.picture
+  let src = selectShop.value?.picture ? selectShop.value?.picture : props.goodsInfo.picture
   if (src) {
     uni.previewImage({
       urls: [src],
     })
   }
 }
-// 主题颜色
-function themeColorFn(name: string) {
-  let color = state.themeColor[name]
-  return color
+// 监听 - 弹出层收起
+function close() {
+  show.value = false
 }
-
-const priceCom = computed(() => '')
-const stockCom = computed(() => '')
-
-defineExpose({
-  init,
-})
+const buyNum = ref(1)
+// 加入购物车
+function addCart() {
+  if (selectShop.value) emit('add-cart', { ...selectShop.value, buyNum: buyNum.value })
+  else uni.showToast({ title: '请选择商品' })
+}
+// 立即购买
+function buyNow() {
+  if (selectShop.value) emit('buy-now', { ...selectShop.value, buyNum: buyNum.value })
+  else uni.showToast({ title: '请选择商品' })
+}
+// 确认
+function sure() {
+  if (selectShop.value) emit('sure', { ...selectShop.value, buyNum: buyNum.value })
+  else uni.showToast({ title: '请选择商品' })
+}
+defineExpose({ selectShop })
 </script>
 
 <template>
-  <!-- <div class="container">
-    <div>价格：{{ price }}</div>
-    <div>库存：{{ stock }}</div>
-    <div v-for="({ title, list }, index) in props.specList" :key="index">
-      <p class="title">{{ title }}</p>
-      <div class="spec-box">
-        <button
-          v-for="(ele, listIndex) in list"
-          :key="listIndex"
-          :disabled="!state.optionSpecs.includes(ele)"
-          :class="{ action: state.selectSpecs.includes(ele) }"
-          @click="handleClick(ele, index)"
-        >
-          {{ ele }}
-        </button>
-      </div>
-    </div>
-  </div> -->
   <view
-    class="vk-data-goods-sku-popup"
+    class="sku-popup"
     catchtouchmove="true"
-    :class="show ? 'show' : 'none'"
+    :class="show ? 'show' : 'hide'"
     @touchmove.stop.prevent="moveHandle"
     @click.stop="stop"
   >
-    <!-- 页面内容开始 -->
     <view class="mask" @click="close"></view>
     <view
-      class="layer attr-content"
-      :class="{ 'safe-area-inset-bottom': safeAreaInsetBottom }"
+      class="layer attr-content safe-area-inset-bottom"
       :style="{
         borderRadius: borderRadius + 'rpx ' + borderRadius + 'rpx 0 0',
-        paddingBottom: state.safeBottom + 'px',
       }"
     >
       <view class="specification-wrapper">
@@ -203,13 +173,13 @@ defineExpose({
             <view class="specification-left">
               <image
                 class="product-img"
-                :src="state.selectShop?.picture ? state.selectShop?.picture : goodsInfo.picture"
+                :src="selectShop?.picture ? selectShop.picture : goodsInfo.picture"
                 mode="aspectFill"
                 @click="previewImage"
               ></image>
             </view>
             <view class="specification-right">
-              <view class="price-content" :style="{ color: themeColorFn('priceColor') }">
+              <view class="price-content">
                 <text class="sign">¥</text>
                 <text class="price" :class="priceCom.length > 16 ? 'price2' : ''">{{
                   priceCom
@@ -233,16 +203,10 @@ defineExpose({
                   v-for="(item_value, index2) in item.options"
                   :key="index2"
                   :class="{
-                    // item_value.ishow ? '' : 'noactived',
-                    // subIndex[index1] == index2 ? 'actived' : '',
                     actived: state.selectSpecs.includes(item_value),
+                    disabled: !state.optionSpecs.includes(item_value),
                   }"
-                  :style="[
-                    // item_value.ishow ? '' : themeColorFn('disableStyle'),
-                    // item_value.ishow ? themeColorFn('btnStyle') : '',
-                    // subIndex[index1] == index2 ? themeColorFn('activedStyle') : '',
-                  ]"
-                  @click="handleClick(item_value, index1)"
+                  @click="handleClick(index1, item_value)"
                 >
                   {{ item_value }}
                 </view>
@@ -251,74 +215,38 @@ defineExpose({
             <view class="number-box-view">
               <view style="flex: 1">数量</view>
               <view style="flex: 4; text-align: right">
-                <!-- <vk-data-input-number-box
-                  v-model="selectNum"
-                  :min="minBuyNum || 1"
-                  :max="maxBuyNumCom"
-                  :step="stepBuyNum || 1"
-                  :step-strictly="stepStrictly"
-                  :positive-integer="true"
-                  @change="numChange"
-                ></vk-data-input-number-box> -->
+                <InputNumberBox
+                  v-model="buyNum"
+                  :min="1"
+                  :max="stockCom"
+                  :step="1"
+                  :step-strictly="true"
+                ></InputNumberBox>
               </view>
             </view>
           </view>
         </scroll-view>
       </view>
 
-      <!-- <view class="btn-wrapper" v-if="outFoStock || mode == 4">
-        <view class="sure" style="color: #ffffff; background-color: #cccccc">{{
-          noStockText
-        }}</view>
-      </view> -->
-      <view class="btn-wrapper" v-if="mode == 1">
-        <view
-          class="sure add-cart"
-          style="border-radius: 38rpx 0rpx 0rpx 38rpx"
-          :style="{
-            color: themeColorFn('addCartColor'),
-            backgroundColor: themeColorFn('addCartBackgroundColor'),
-          }"
-          @click="addCart"
-        >
+      <view class="btn-wrapper" v-if="mode === SkuMode.CartAndCart">
+        <view class="btn add-cart" style="border-radius: 38rpx 0rpx 0rpx 38rpx" @click="addCart">
           加入购物车
         </view>
-
-        <view
-          class="sure"
-          style="border-radius: 0rpx 38rpx 38rpx 0rpx"
-          :style="{
-            color: themeColorFn('buyNowColor'),
-            backgroundColor: themeColorFn('buyNowBackgroundColor'),
-          }"
-          @click="buyNow"
-        >
+        <view class="btn" style="border-radius: 0rpx 38rpx 38rpx 0rpx" @click="buyNow">
           立即购买
         </view>
       </view>
-      <view class="btn-wrapper" v-else-if="mode == 2">
-        <view
-          class="sure add-cart"
-          :style="{
-            color: themeColorFn('addCartColor'),
-            backgroundColor: themeColorFn('addCartBackgroundColor'),
-          }"
-          @click="addCart"
-        >
-          加入购物车
-        </view>
+      <view class="btn-wrapper" v-else-if="mode === SkuMode.Cart">
+        <view class="btn add-cart" @click="addCart"> 加入购物车 </view>
       </view>
-      <view class="btn-wrapper" v-else-if="mode == 3">
-        <view
-          class="sure"
-          :style="{
-            color: themeColorFn('buyNowColor'),
-            backgroundColor: themeColorFn('buyNowBackgroundColor'),
-          }"
-          @click="buyNow"
-        >
-          立即购买
-        </view>
+      <view class="btn-wrapper" v-else-if="mode === SkuMode.Buy">
+        <view class="btn" @click="buyNow"> 立即购买 </view>
+      </view>
+      <view class="btn-wrapper" v-if="mode === SkuMode.Sure">
+        <view class="btn sure" @click="sure" style="">确认</view>
+      </view>
+      <view class="btn-wrapper" v-else>
+        <view class="btn no-stork">缺货</view>
       </view>
     </view>
     <!-- 页面内容结束 -->
@@ -326,11 +254,8 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-.action {
-  color: blue;
-}
 /*  sku弹出层 */
-.vk-data-goods-sku-popup {
+.sku-popup {
   position: fixed;
   left: 0;
   top: 0;
@@ -352,6 +277,8 @@ defineExpose({
   }
 
   &.hide {
+    display: none;
+
     .mask {
       animation: hidePopup 0.2s linear both;
     }
@@ -361,9 +288,6 @@ defineExpose({
     }
   }
 
-  &.none {
-    display: none;
-  }
   .mask {
     position: fixed;
     top: 0;
@@ -372,18 +296,21 @@ defineExpose({
     z-index: 1;
     background-color: rgba(0, 0, 0, 0.3);
   }
-  .layer {
-    display: flex;
-    width: 100%;
-    // height: 1014rpx;
-    flex-direction: column;
-    // min-height: 40vh;
-    // max-height: 1014rpx;
+
+  .attr-content {
     position: fixed;
-    z-index: 99;
     bottom: 0;
-    border-radius: 10rpx 10rpx 0 0;
+    z-index: 99;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
     background-color: #fff;
+
+    &.safe-area-inset-bottom {
+      padding-bottom: 0;
+      padding-bottom: constant(safe-area-inset-bottom);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
 
     .specification-wrapper {
       width: 100%;
@@ -399,11 +326,11 @@ defineExpose({
         }
 
         .specification-header {
-          width: 100%;
-          display: flex;
-          flex-direction: row;
           position: relative;
           margin-bottom: 40rpx;
+          display: flex;
+          flex-direction: row;
+          width: 100%;
 
           .specification-left {
             width: 180rpx;
@@ -418,8 +345,8 @@ defineExpose({
 
           .specification-right {
             flex: 1;
-            padding: 0 35rpx 0 28rpx;
             box-sizing: border-box;
+            padding: 0 35rpx 0 28rpx;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -479,24 +406,24 @@ defineExpose({
 
               .item-content {
                 display: inline-block;
-                padding: 10rpx 35rpx;
-                font-size: 24rpx;
-                border-radius: 10rpx;
-                background-color: #ffffff;
-                color: #333333;
+                box-sizing: border-box;
                 margin-right: 20rpx;
                 margin-bottom: 16rpx;
+                padding: 10rpx 35rpx;
+                border-radius: 10rpx;
                 border: 1px solid #f4f4f4;
-                box-sizing: border-box;
+                background-color: #ffffff;
+                color: #333333;
+                font-size: 24rpx;
                 &.actived {
                   border-color: #fe560a;
                   color: #fe560a;
                 }
-
-                &.noactived {
-                  background-color: #f6f6f6;
+                &.disabled {
                   border-color: #f6f6f6;
                   color: #c3c3c3;
+                  opacity: 0.8;
+                  cursor: not-allowed;
                 }
               }
             }
@@ -509,33 +436,16 @@ defineExpose({
       }
     }
     .btn-wrapper {
-      display: flex;
+      box-sizing: border-box;
+      padding: 0 26rpx;
       width: 100%;
       height: 120rpx;
       flex: 0 0 120rpx;
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 26rpx;
-      box-sizing: border-box;
-      .layer-btn {
-        width: 335rpx;
-        height: 76rpx;
-        border-radius: 38rpx;
-        color: #fff;
-        line-height: 76rpx;
-        text-align: center;
-        font-weight: 500;
-        font-size: 28rpx;
 
-        &.add-cart {
-          background: #ffbe46;
-        }
-
-        &.buy {
-          background: #fe560a;
-        }
-      }
-      .sure {
+      .btn {
         width: 698rpx;
         height: 68rpx;
         border-radius: 38rpx;
@@ -545,15 +455,16 @@ defineExpose({
         font-weight: 500;
         font-size: 28rpx;
         background: #fe560a;
+        &.add-cart {
+          background: #ff9402;
+        }
+        &.sure {
+          background-color: #ff9402;
+        }
+        &.no-stork {
+          background-color: #cccccc;
+        }
       }
-      .sure.add-cart {
-        background: #ff9402;
-      }
-    }
-    .btn-wrapper.safe-area-inset-bottom {
-      padding-bottom: 0;
-      padding-bottom: constant(safe-area-inset-bottom);
-      padding-bottom: env(safe-area-inset-bottom);
     }
   }
 
