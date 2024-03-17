@@ -12,7 +12,7 @@
 
 import { useMemberStore } from '@/stores'
 
-const baseURL = 'http://192.168.1.106:3000'
+const baseURL = 'http://43.139.39.151:1066'
 
 // 添加拦截器
 const httpInterceptor = {
