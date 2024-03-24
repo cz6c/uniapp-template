@@ -13,7 +13,7 @@ import { http } from '@/utils/http'
 export const getMemberOrderPreAPI = () => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: '/app/order/pre',
+    url: '/order/pre',
   })
 }
 
@@ -27,7 +27,7 @@ export const getMemberOrderPreNowAPI = (data: {
 }) => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: '/app/order/nowPre',
+    url: '/order/nowPre',
     data,
   })
 }
@@ -39,7 +39,7 @@ export const getMemberOrderPreNowAPI = (data: {
 export const getMemberOrderRepurchaseByIdAPI = (id: string) => {
   return http<OrderPreResult>({
     method: 'GET',
-    url: `/app/order/repurchase`,
+    url: `/order/repurchase`,
     data: { id },
   })
 }
@@ -51,7 +51,7 @@ export const getMemberOrderRepurchaseByIdAPI = (id: string) => {
 export const postMemberOrderAPI = (data: OrderCreateParams) => {
   return http<{ id: string }>({
     method: 'POST',
-    url: '/app/order/create',
+    url: '/order/create',
     data,
   })
 }
@@ -63,7 +63,7 @@ export const postMemberOrderAPI = (data: OrderCreateParams) => {
 export const getMemberOrderByIdAPI = (id: string) => {
   return http<OrderResult>({
     method: 'GET',
-    url: `/app/order/info`,
+    url: `/order/info`,
     data: { id },
   })
 }
@@ -76,7 +76,7 @@ export const getMemberOrderByIdAPI = (id: string) => {
 export const postMemberOrderReceiptByIdAPI = (id: string) => {
   return http<OrderResult>({
     method: 'POST',
-    url: `/app/order/receipt`,
+    url: `/order/receipt`,
     data: { id },
   })
 }
@@ -89,7 +89,7 @@ export const postMemberOrderReceiptByIdAPI = (id: string) => {
 export const getMemberOrderLogisticsByIdAPI = (id: string) => {
   return http<OrderLogisticResult>({
     method: 'GET',
-    url: `/app/order/logistics`,
+    url: `/order/logistics`,
     data: { id },
   })
 }
@@ -102,7 +102,7 @@ export const getMemberOrderLogisticsByIdAPI = (id: string) => {
 export const deleteMemberOrderAPI = (data: { ids: string[] }) => {
   return http({
     method: 'POST',
-    url: `/app/order/delete`,
+    url: `/order/delete`,
     data,
   })
 }
@@ -116,7 +116,7 @@ export const deleteMemberOrderAPI = (data: { ids: string[] }) => {
 export const getMemberOrderCancelByIdAPI = (data: { id: string; cancelReason: string }) => {
   return http<OrderResult>({
     method: 'POST',
-    url: `/app/order/cancel`,
+    url: `/order/cancel`,
     data,
   })
 }
@@ -128,7 +128,7 @@ export const getMemberOrderCancelByIdAPI = (data: { id: string; cancelReason: st
 export const getMemberOrderAPI = (data: OrderListParams) => {
   return http<OrderListResult>({
     method: 'GET',
-    url: `/app/order/list`,
+    url: `/order/list`,
     data,
   })
 }

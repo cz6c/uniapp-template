@@ -29,7 +29,7 @@ type LoginParams = {
 export const postLoginAPI = (data: LoginParams) => {
   return http<LoginResult>({
     method: 'POST',
-    url: '/app/memberLogin',
+    url: '/auth/memberLogin',
     data,
   })
 }

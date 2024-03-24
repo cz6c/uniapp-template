@@ -1,9 +1,17 @@
-<script setup lang="ts">
+<script setup lang="ts" name="SpecsSelectPopup">
 import { computed, ref, reactive, watch } from 'vue'
 import { SpecAdjoinMatrix } from './sku'
 import type { GoodsResult, SkuItem } from '@/types/goods'
 import InputNumberBox from './components/InputNumberBox.vue'
-import { SkuMode } from './index.d'
+// import { SkuMode } from './index.d.ts'
+
+enum SkuMode {
+  CartAndCart = 1,
+  Cart = 2,
+  Buy = 3,
+  Sure = 4,
+  NoStock = 5,
+}
 
 interface Props {
   modelValue: boolean

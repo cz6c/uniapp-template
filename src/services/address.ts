@@ -8,7 +8,7 @@ import { http } from '@/utils/http'
 export const addMemberAddressAPI = (data: AddressParams) => {
   return http({
     method: 'POST',
-    url: '/app/address/create',
+    url: '/address/create',
     data,
   })
 }
@@ -19,7 +19,7 @@ export const addMemberAddressAPI = (data: AddressParams) => {
 export const getMemberAddressAPI = () => {
   return http<{ list: AddressItem[] }>({
     method: 'GET',
-    url: '/app/address/list',
+    url: '/address/list',
   })
 }
 
@@ -30,7 +30,7 @@ export const getMemberAddressAPI = () => {
 export const getMemberAddressByIdAPI = (id: string) => {
   return http<AddressItem>({
     method: 'GET',
-    url: `/app/address/info`,
+    url: `/address/info`,
     data: { id },
   })
 }
@@ -42,7 +42,7 @@ export const getMemberAddressByIdAPI = (id: string) => {
 export const updateMemberAddressByIdAPI = (data: AddressParams & { id: string }) => {
   return http({
     method: 'POST',
-    url: `/app/address/update`,
+    url: `/address/update`,
     data,
   })
 }
@@ -54,7 +54,7 @@ export const updateMemberAddressByIdAPI = (data: AddressParams & { id: string })
 export const deleteMemberAddressByIdAPI = (id: string) => {
   return http({
     method: 'POST',
-    url: `/app/address/delete`,
+    url: `/address/delete`,
     data: { id },
   })
 }

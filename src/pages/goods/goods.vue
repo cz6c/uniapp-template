@@ -1,14 +1,24 @@
 <script setup lang="ts">
-import type { SkuPopupEvent } from '@/components/SpecsSelectPopup'
-import { SkuMode } from '@/components/SpecsSelectPopup'
 import { postMemberCartAPI } from '@/services/cart'
 import { getGoodsByIdAPI } from '@/services/goods'
-import type { GoodsResult, SkuItem } from '@/types/goods'
+import type { GoodsResult } from '@/types/goods'
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import AddressPanel from './components/AddressPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
 import type { SkuPopupInstance } from '@/components'
+import SpecsSelectPopup from '@/components/SpecsSelectPopup/index.vue'
+import type { SkuPopupEvent } from '@/components/SpecsSelectPopup'
+
+console.log(SpecsSelectPopup)
+
+enum SkuMode {
+  CartAndCart = 1,
+  Cart = 2,
+  Buy = 3,
+  Sure = 4,
+  NoStock = 5,
+}
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
@@ -70,7 +80,7 @@ const openSkuPopup = (val: SkuMode) => {
   mode.value = val
 }
 // SKU组件实例
-const refSpecsSelect = ref<SkuPopupInstance>()
+const refSpecsSelect = ref<SkuPopupInstance>(null)
 // 计算被选中的值
 const selectArrText = computed(() => {
   return refSpecsSelect.value?.selectShop?.specVals.join(' ').trim() || '请选择商品规格'
@@ -109,7 +119,7 @@ const onBuyNow = (ev: SkuPopupEvent) => {
         <view class="indicator">
           <text class="current">{{ currentIndex + 1 }}</text>
           <text class="split">/</text>
-          <text class="total">{{ goods?.mainPictures.length }}</text>
+          <text class="total">{{ goods?.mainPictures?.length }}</text>
         </view>
       </view>
 

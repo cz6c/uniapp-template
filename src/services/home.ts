@@ -8,7 +8,7 @@ import { http } from '@/utils/http'
 export const getHomeBannerAPI = () => {
   return http<{ list: BannerItem[] }>({
     method: 'GET',
-    url: '/app/banner/list',
+    url: '/banner/list',
   })
 }
 
@@ -28,7 +28,7 @@ export const getHomeCategoryAPI = () => {
 export const getHomeGoodsGuessLikeAPI = (data?: PageParams) => {
   return http<PageResult<GuessItem>>({
     method: 'GET',
-    url: '/app/product/list',
+    url: '/product/list',
     data,
   })
 }

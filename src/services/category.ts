@@ -7,6 +7,6 @@ import { http } from '@/utils/http'
 export const getCategoryTopAPI = () => {
   return http<CategoryTopItem[]>({
     method: 'GET',
-    url: '/app/category/trees',
+    url: '/category/trees',
   })
 }
